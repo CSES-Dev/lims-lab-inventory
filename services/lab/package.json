@@ -1,0 +1,21 @@
+{
+  "name": "@lims/lab-service",
+  "version": "1.0.0",
+  "description": "Lab inventory service with layered architecture",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lab",
+    "inventory",
+    "lims"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "mongoose": "^8.0.0",
+    "next": "^15.0.0"
+  }
+}
