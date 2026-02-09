@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+// Lab Schema definition 
+// Each lab has a unique ID, name, department, and a timestamp for when it was created
 const labSchema = new mongoose.Schema(
     {
         _id: { type: String, required: true },
@@ -9,5 +11,6 @@ const labSchema = new mongoose.Schema(
     }
 );
 
+// Create and export the Lab model
 const LabModel = mongoose.models.Lab || mongoose.model("Lab", labSchema);
 export default LabModel;
