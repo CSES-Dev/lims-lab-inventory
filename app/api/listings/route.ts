@@ -3,20 +3,17 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { z } from "zod";
 import Listing from "@/models/Listing";
 
-// test comment
-// ask about whether users should provide _id, that seems more like a
-// server task, the rest they should be able to
 const listingValidationSchema = z.object({
-  _id: z.string().min(1),
   itemId: z.string().min(1),
   labId: z.string().min(1),
-  quantityAvailable: z.number().min(0), // can list items with 0 quantity?
+  quantityAvailable: z.number().min(1),
   createdAt: z
     .string()
     // could possibly change to MM-DD-YYYY
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD."),
 });
 
+// helper method to verify connection
 async function connect() {
   try {
     await connectToDatabase();
@@ -28,7 +25,8 @@ async function connect() {
   }
 }
 
-// get all
+// GET: Return all listings stored in DB
+// input: get request with no query string for id
 async function GET() {
   const connectionResponse = await connect();
   if (connectionResponse) return connectionResponse;
@@ -47,7 +45,8 @@ async function GET() {
   }
 }
 
-// post all
+// POST: Create a new listing in DB
+// input: post request with json data in body
 async function POST(request: Request) {
   const connectionResponse = await connect();
   if (connectionResponse) return connectionResponse;
@@ -77,7 +76,6 @@ async function POST(request: Request) {
         data: listing,
       },
       { status: 201, headers: { Location: `/app/listings/${listing._id}` } }
-      // resource will be retrievable at this url
     );
   } catch (error: any) {
     if (error.code === 11000) {
