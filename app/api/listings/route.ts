@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
-import { z } from "zod";
 import Listing from "@/models/Listing";
 
-const listingValidationSchema = z.object({
-  itemId: z.string().min(1),
-  labId: z.string().min(1),
-  quantityAvailable: z.number().min(1),
-  createdAt: z
-    .string()
-    // could possibly change to MM-DD-YYYY
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD."),
-});
+/* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
 
 // helper method to verify connection
 async function connect() {
@@ -25,14 +16,40 @@ async function connect() {
   }
 }
 
-// GET: Return all listings stored in DB
-// input: get request with no query string for id
-async function GET() {
+// GET: Return a number of filtered listings stored in db
+// input: req for an amount of certain listings
+//    (ex: /listings/?labId=3&page=2&limit=5)
+// output: 10 possibly filtered listings from the db
+async function GET(request: Request) {
   const connectionResponse = await connect();
   if (connectionResponse) return connectionResponse;
 
+  const { searchParams } = new URL(request.url);
+  const labId = searchParams.get("labId");
+  const itemId = searchParams.get("itemId");
+
+  /* FILTERS */
+  // build query obj to filter by lab/item id if filters not null
+  const query: any = {};
+  if (labId) query.labId = labId;
+  if (itemId) query.itemId = itemId;
+
+  /* PAGINATION */
+  // default to 10 listings per page
+  const pageParam = parseInt(searchParams.get("page") || "1");
+  const limitParam = parseInt(searchParams.get("limit") || "10");
+
+  // page must be >= 1 if given
+  const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
+  const MAX_LIMIT = 20; // inquire about this in the future
+  const limit =
+    isNaN(limitParam) || limitParam < 1 ? 10 : Math.min(limitParam, MAX_LIMIT);
+
+  const skip = (page - 1) * limit;
+
   try {
-    const listings = await Listing.find();
+    const listings = await Listing.find(query).skip(skip).limit(limit);
     return NextResponse.json(
       { success: true, data: listings },
       { status: 200 }
@@ -53,22 +70,21 @@ async function POST(request: Request) {
 
   // assuming frontend sends req with content-type set to app/json
   // content type automatically set as app/json
-  const body = await request.json();
-  const parsedBody = listingValidationSchema.safeParse(body);
-
-  if (!parsedBody.success) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
     return NextResponse.json(
       {
         success: false,
         message: "Invalid request body.",
-        // error: parsedBody.error.format(), don't expose error?
       },
       { status: 400 }
     );
   }
 
   try {
-    const listing = await Listing.create(parsedBody.data);
+    const listing = await Listing.create({ ...body, createdAt: new Date() });
     return NextResponse.json(
       {
         success: true,
