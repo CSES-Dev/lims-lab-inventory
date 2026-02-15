@@ -6,7 +6,6 @@ const MONGODB_URI = process.env.DATABASE_URL!;
 mongoose.connect(MONGODB_URI);
 
 const listingSchema = new Schema({
-  _id: { type: String, required: true },
   itemId: { type: String, required: true },
   labId: { type: String, required: true },
   quantityAvailable: { type: Number, required: true },
@@ -23,5 +22,5 @@ listingSchema.index(
   { unique: true }
 );
 
-const listing = mongoose.models.Listing || model("Listing", listingSchema);
-export default listing;
+const Listing = mongoose.models.Listing || model("Listing", listingSchema);
+export default Listing;
