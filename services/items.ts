@@ -42,9 +42,8 @@ export async function updateItem(
     return updated ? toItem(updated) : null;
 }
 
-// deleteItem left out due to demo.ts warning
-/* export async function deleteItem(id: string): Promise<boolean> {
+export async function deleteItem(id: string): Promise<boolean> {
     await connectToDatabase();
     const deleted = await ItemModel.findByIdAndDelete(id).exec();
     return Boolean(deleted);
-} */
+}
