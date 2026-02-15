@@ -49,6 +49,7 @@ export async function PUT(
     return NextResponse.json(updated, { status: 200 });
 }
 
+// Should probably check for auth to prevent unauthorized deletes
 // DELETE: Delete a product by id
 export async function DELETE(
     _: Request,

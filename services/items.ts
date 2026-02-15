@@ -42,6 +42,7 @@ export async function updateItem(
     return updated ? toItem(updated) : null;
 }
 
+// Concerned about potential unauthorized deletes as warned by demo.ts.
 export async function deleteItem(id: string): Promise<boolean> {
     await connectToDatabase();
     const deleted = await ItemModel.findByIdAndDelete(id).exec();
