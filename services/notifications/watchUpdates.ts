@@ -9,17 +9,20 @@ import Notification from "@/models/Notification";
 export async function startNotificationWatcher() {
   await connectToDatabase();
 
-  const collection = mongoose.connection.collection("products");
+  const collection = mongoose.connection.collection("items");
 
   const changeStream = collection.watch([], {
     fullDocument: "updateLookup",
   });
 
-  console.log("[notifications] watcher started");
-
   for await (const change of changeStream) {
     if (change.operationType !== "update") continue;
 
+    /** 
+     * Get the updated document from the change stream
+     * If quantity is below the threshold, continue
+     * else send a notification
+     */
     const updatedDoc = change.fullDocument;
     if (!updatedDoc) continue;
 
