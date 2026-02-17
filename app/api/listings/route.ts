@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
+import { z } from "zod";
 import Listing from "@/models/Listing";
 
 /* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
+const listingValidationSchema = z.object({
+  itemId: z.string().min(1),
+  labId: z.string().min(1),
+  quantityAvailable: z.number().min(1),
+});
 
 // helper method to verify connection
 async function connect() {
@@ -35,13 +41,10 @@ async function GET(request: Request) {
   if (itemId) query.itemId = itemId;
 
   /* PAGINATION */
-  // default to 10 listings per page
   const pageParam = parseInt(searchParams.get("page") || "1");
   const limitParam = parseInt(searchParams.get("limit") || "10");
 
-  // page must be >= 1 if given
   const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-
   const MAX_LIMIT = 20; // inquire about this in the future
   const limit =
     isNaN(limitParam) || limitParam < 1 ? 10 : Math.min(limitParam, MAX_LIMIT);
@@ -49,9 +52,26 @@ async function GET(request: Request) {
   const skip = (page - 1) * limit;
 
   try {
-    const listings = await Listing.find(query).skip(skip).limit(limit);
+    const [listings, total] = await Promise.all([
+      Listing.find(query)
+        .sort({ createdAt: -1 }) // sort from newest to oldest
+        .skip(skip)
+        .limit(limit)
+        .lean(), // return js obj instead of mongoose documents
+      Listing.countDocuments(query), // total listings for this query
+    ]);
+
     return NextResponse.json(
-      { success: true, data: listings },
+      {
+        success: true,
+        data: listings,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -70,10 +90,10 @@ async function POST(request: Request) {
 
   // assuming frontend sends req with content-type set to app/json
   // content type automatically set as app/json
-  let body;
-  try {
-    body = await request.json();
-  } catch {
+  const body = await request.json();
+  const parsedBody = listingValidationSchema.safeParse(body);
+
+  if (!parsedBody.success) {
     return NextResponse.json(
       {
         success: false,
@@ -84,7 +104,11 @@ async function POST(request: Request) {
   }
 
   try {
-    const listing = await Listing.create({ ...body, createdAt: new Date() });
+    const listing = await Listing.create({
+      ...parsedBody.data,
+      // could possibly have {timestamps:true in schema to remove date stamp here}
+      createdAt: new Date(),
+    });
     return NextResponse.json(
       {
         success: true,

@@ -13,14 +13,18 @@ const listingSchema = new Schema({
   createdAt: { type: Date, required: true },
 });
 
-listingSchema.index(
-  {
-    itemId: 1,
-    labId: 1,
-    createdAt: 1,
-  },
-  { unique: true }
-);
+// listingSchema.index(
+//   {
+//     itemId: 1,
+//     labId: 1,
+//     createdAt: 1,
+//   },
+//   { unique: true }
+// );
+
+// for filtering
+listingSchema.index({ labId: 1, createdAt: -1 });
+listingSchema.index({ itemId: 1, createdAt: -1 });
 
 const Listing = mongoose.models.Listing || model("Listing", listingSchema);
 export default Listing;
