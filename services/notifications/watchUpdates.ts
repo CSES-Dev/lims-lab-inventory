@@ -18,14 +18,15 @@ export async function startNotificationWatcher() {
   for await (const change of changeStream) {
     if (change.operationType !== "update") continue;
 
-    /** 
-     * Get the updated document from the change stream
-     * If quantity is below the threshold, continue
-     * else send a notification
-     */
+    // Get the updated document from the change stream
     const updatedDoc = change.fullDocument;
+
+    // If there’s no document, skip this iteration
     if (!updatedDoc) continue;
 
+    // TODO: Check the quantity in updatedDoc
+    // If quantity is below the threshold, continue
+    // Otherwise, send a notification
     await Notification.create({
       _id: `notif_${Date.now()}`,
       type: "DB_UPDATE",
