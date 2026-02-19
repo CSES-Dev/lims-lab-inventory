@@ -13,14 +13,14 @@ interface FilterParams {
 }
 
 /**
- * Get all listing entries
+ * Get all listing entries (likely unused since filtered & paginated more realistic)
  * @returns array of listings as JS objects
  */
-// async function getListings(): Promise<Listing[]> {
-//   await connectToDatabase();
-//   const listings = await ListingModel.find().exec();
-//   return listings.map((listing) => toListing(listing));
-// }
+async function getListings(): Promise<Listing[]> {
+  await connectToDatabase();
+  const listings = await ListingModel.find().exec();
+  return listings.map((listing) => toListing(listing));
+}
 
 /**
  * Get filtered listing entries

@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
 import { z } from "zod";
-import Listing from "@/models/Listing";
-import {
-  getFilteredListings,
-  getListing,
-  addListing,
-  updateListing,
-  deleteListing,
-} from "@/services/listings/listings";
+import { getFilteredListings, addListing } from "@/services/listings/listings";
 
 /* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
 const listingValidationSchema = z.object({
   itemId: z.string().min(1),
   labId: z.string().min(1),
   quantityAvailable: z.number().min(1),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
 });
 
-// helper method to verify connection
+/**
+ * helper method to verify connection
+ */
 async function connect() {
   try {
     await connectToDatabase();
@@ -29,10 +25,12 @@ async function connect() {
   }
 }
 
-// GET: Return a number of filtered listings stored in db
-// input: req for an amount of certain listings
-//    (ex: /listings/?labId=3&page=2&limit=5)
-// output: 10 possibly filtered listings from the db
+/**
+ * Get filtered listings stored in db
+ * @param request the request
+ * ex req: GET /listings/?labId=3&page=2&limit=5 HTTP/1.1
+ * @returns JSON response with the filtered listings as JS objects
+ */
 async function GET(request: Request) {
   const connectionResponse = await connect();
   if (connectionResponse) return connectionResponse;
@@ -67,8 +65,11 @@ async function GET(request: Request) {
   }
 }
 
-// POST: Create a new listing in DB
-// input: post request with json data in body
+/**
+ * Create a new listing to store in db
+ * @param request the request with JSON data in req body
+ * @returns JSON response with success message and req body echoed
+ */
 async function POST(request: Request) {
   const connectionResponse = await connect();
   if (connectionResponse) return connectionResponse;
@@ -89,18 +90,15 @@ async function POST(request: Request) {
   }
 
   try {
-    const listing = await Listing.create({
-      ...parsedBody.data,
-      // could possibly have {timestamps:true in schema to remove date stamp here}
-      createdAt: new Date(),
-    });
+    const listingData = { ...parsedBody.data, createdAt: new Date() };
+    const listing = await addListing(listingData);
     return NextResponse.json(
       {
         success: true,
         message: "Successfully created new listing.",
         data: listing,
       },
-      { status: 201, headers: { Location: `/app/listings/${listing._id}` } }
+      { status: 201, headers: { Location: `/app/listings/${listing.id}` } }
     );
   } catch (error: any) {
     if (error.code === 11000) {
