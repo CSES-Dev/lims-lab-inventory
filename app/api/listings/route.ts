@@ -12,28 +12,20 @@ const listingValidationSchema = z.object({
 });
 
 /**
- * helper method to verify connection
- */
-async function connect() {
-  try {
-    await connectToDatabase();
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Error connecting to database" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
  * Get filtered listings stored in db
  * @param request the request
  * ex req: GET /listings/?labId=3&page=2&limit=5 HTTP/1.1
  * @returns JSON response with the filtered listings as JS objects
  */
 async function GET(request: Request) {
-  const connectionResponse = await connect();
-  if (connectionResponse) return connectionResponse;
+  try {
+    await connectToDatabase();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Error connecting to database." },
+      { status: 500 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const labId = searchParams.get("labId") || undefined;
@@ -71,8 +63,14 @@ async function GET(request: Request) {
  * @returns JSON response with success message and req body echoed
  */
 async function POST(request: Request) {
-  const connectionResponse = await connect();
-  if (connectionResponse) return connectionResponse;
+  try {
+    await connectToDatabase();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Error connecting to database." },
+      { status: 500 }
+    );
+  }
 
   // assuming frontend sends req with content-type set to app/json
   // content type automatically set as app/json

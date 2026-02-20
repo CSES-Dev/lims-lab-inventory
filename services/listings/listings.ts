@@ -1,5 +1,4 @@
 import type { HydratedDocument } from "mongoose";
-import { connectToDatabase } from "@/lib/mongoose";
 import ListingModel, { Listing, ListingInput } from "@/models/Listing";
 
 type ListingDocument = HydratedDocument<ListingInput>;
@@ -17,7 +16,6 @@ interface FilterParams {
  * @returns array of listings as JS objects
  */
 async function getListings(): Promise<Listing[]> {
-  await connectToDatabase();
   const listings = await ListingModel.find().exec();
   return listings.map((listing) => toListing(listing));
 }
@@ -40,7 +38,7 @@ async function getFilteredListings({
   const validPage = isNaN(page) || page < 1 ? 1 : page;
   const validLimit =
     isNaN(limit) || limit < 1 ? 10 : Math.min(limit, MAX_LIMIT);
-  const skip = (page - 1) * limit;
+  const skip = (page - 1) * validLimit;
 
   const [listings, total] = await Promise.all([
     ListingModel.find(query)
@@ -68,7 +66,6 @@ async function getFilteredListings({
  * @returns the listing as a JS object
  */
 async function getListing(id: string): Promise<Listing | null> {
-  await connectToDatabase();
   const listing = await ListingModel.findById(id).exec();
   return listing ? toListing(listing) : null;
 }
@@ -79,7 +76,6 @@ async function getListing(id: string): Promise<Listing | null> {
  * @returns the created listing as JS object
  */
 async function addListing(newListing: ListingInput): Promise<Listing> {
-  await connectToDatabase();
   const createdListing = await ListingModel.create(newListing);
   return toListing(createdListing);
 }
@@ -94,7 +90,6 @@ async function updateListing(
   id: string,
   data: Partial<ListingInput>
 ): Promise<Listing | null> {
-  await connectToDatabase();
   const updatedListing = await ListingModel.findByIdAndUpdate(id, data, {
     new: true,
     runValidators: true,
@@ -110,7 +105,6 @@ async function updateListing(
 // DON'T use this for tables that you don't actually need to potentially delete things from
 // Could be used accidentally or misused maliciously to get rid of important data
 async function deleteListing(id: string): Promise<boolean> {
-  await connectToDatabase();
   const deleted = await ListingModel.findByIdAndDelete(id).exec();
   return Boolean(deleted);
 }

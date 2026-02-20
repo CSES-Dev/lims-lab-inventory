@@ -19,9 +19,12 @@ const listingValidationSchema = z.object({
 });
 
 /**
- * helper method to verify connection
+ * Get a listing entry by ID
+ * @param id the ID of the listing to get
+ * ex req: GET /listings/001 HTTP/1.1
+ * @returns the listing as a JS object in a JSON response
  */
-async function connect() {
+async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     await connectToDatabase();
   } catch {
@@ -30,17 +33,6 @@ async function connect() {
       { status: 500 }
     );
   }
-}
-
-/**
- * Get a listing entry by ID
- * @param id the ID of the listing to get
- * ex req: GET /listings/001 HTTP/1.1
- * @returns the listing as a JS object in a JSON response
- */
-async function GET(request: Request, { params }: { params: { id: string } }) {
-  const connectionResponse = await connect();
-  if (connectionResponse) return connectionResponse;
 
   const parsedId = objectIdSchema.safeParse(params.id);
   if (!parsedId.success) {
@@ -76,8 +68,14 @@ async function GET(request: Request, { params }: { params: { id: string } }) {
  * @returns the updated listing as a JS object in a JSON response
  */
 async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const connectionResponse = await connect();
-  if (connectionResponse) return connectionResponse;
+  try {
+    await connectToDatabase();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Error connecting to database." },
+      { status: 500 }
+    );
+  }
 
   const parsedId = objectIdSchema.safeParse(params.id);
   if (!parsedId.success) {
@@ -112,7 +110,10 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
   }
 
   try {
-    const updatedListing = await updateListing(parsedId.data, body);
+    const updatedListing = await updateListing(
+      parsedId.data,
+      parsedRequest.data.update
+    );
     if (!updatedListing) {
       return NextResponse.json(
         {
@@ -150,8 +151,14 @@ async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const connectionResponse = await connect();
-  if (connectionResponse) return connectionResponse;
+  try {
+    await connectToDatabase();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Error connecting to database." },
+      { status: 500 }
+    );
+  }
 
   const parsedId = objectIdSchema.safeParse(params.id);
   if (!parsedId.success) {
