@@ -41,3 +41,20 @@ export async function connectToDatabase() {
   cached.conn = await cached.promise;
   return cached.conn;
 }
+
+/**
+ * Disconnect from MongoDB for testing
+ */
+export async function disconnectDatabase() {
+  if (cached.conn) {
+    try {
+      await cached.conn.disconnect();
+      cached.conn = null;
+      cached.promise = null;
+      console.log("DB disconnected");
+    } catch (error) {
+      console.error("Error disconnecting from database", error);
+      throw error;
+    }
+  }
+}
