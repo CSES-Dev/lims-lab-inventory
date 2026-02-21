@@ -1,27 +1,49 @@
 import mongoose from "mongoose";
+import {
+  HydratedDocument,
+  InferSchemaType,
+  Model,
+  Schema,
+  model,
+  models,
+} from "mongoose";
 
-const { Schema, model } = mongoose;
 const MONGODB_URI = process.env.DATABASE_URL!;
-
 mongoose.connect(MONGODB_URI);
 
-const listingSchema = new Schema({
-  _id: { type: String, required: true },
-  itemId: { type: String, required: true },
-  labId: { type: String, required: true },
-  quantityAvailable: { type: Number, required: true },
-  status: { type: String, enum: ["ACTIVE", "INACTIVE"], required: true },
-  createdAt: { type: Date, required: true },
-});
+const transformDocument = (_: unknown, ret: Record<string, unknown>) => {
+  ret.id = ret._id?.toString();
+  delete ret._id;
+  return ret;
+}; // for properly handling toObject() or toJSON() and stringifying id
 
-listingSchema.index(
+const listingSchema = new Schema(
   {
-    itemId: 1,
-    labId: 1,
-    createdAt: 1,
+    itemId: { type: String, required: true },
+    labId: { type: String, required: true },
+    quantityAvailable: { type: Number, required: true },
+    status: { type: String, enum: ["ACTIVE", "INACTIVE"], required: true },
+    createdAt: { type: Date, required: true },
   },
-  { unique: true }
+  {
+    toJSON: { virtuals: true, versionKey: false, transform: transformDocument },
+    toObject: {
+      virtuals: true,
+      versionKey: false,
+      transform: transformDocument,
+    },
+  }
 );
 
-const listing = mongoose.models.Listing || model("Listing", listingSchema);
-export default listing;
+// for filtering
+listingSchema.index({ labId: 1, createdAt: -1 });
+listingSchema.index({ itemId: 1, createdAt: -1 });
+
+export type ListingInput = InferSchemaType<typeof listingSchema>;
+export type Listing = ListingInput & { id: string };
+export type ListingDocument = HydratedDocument<ListingInput>;
+
+const ListingModel: Model<ListingInput> =
+  (models.Listing as Model<ListingInput>) ||
+  model<ListingInput>("Listing", listingSchema);
+export default ListingModel;
