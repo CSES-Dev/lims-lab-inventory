@@ -65,8 +65,12 @@ export type ItemUpdateInput = Partial<ItemCreateInput>;
 export type ItemCategory = (typeof categoryValues)[number];
 export type NotificationEvent = (typeof notificationEventValues)[number];
 export type NotificationAudience = (typeof notificationAudienceValues)[number];
-export type Item = ItemInput & { id: string };
+
+export type Item = { id: string } & Omit<ItemInput, "_id">;
+// ?
 export type ItemDocument = HydratedDocument<ItemInput>;
+
+export const toItem = (doc: ItemDocument): Item => doc.toObject<Item>();
 
 const ItemModel: Model<ItemInput> =
     (models.Item as Model<ItemInput>) || model<ItemInput>("Item", itemSchema);

@@ -30,14 +30,29 @@ const itemCreateSchema = z.object({
 });
 
 // GET: fetch all items
+// implement page, limit, labid search params
 export async function GET() {
-    const items = await getItems();
-    return NextResponse.json(items, { status: 200 });
+    try {
+        const items = await getItems();
+        return NextResponse.json(items, { status: 200 });
+    } catch {
+        return NextResponse.json(
+            { message: "Failed to fetch items" },
+            { status: 500 }
+        );
+    }
 }
 
 // POST: add a new item
 export async function POST(request: Request) {
-    const newItem = itemCreateSchema.parse(await request.json());
-    const created = await addItem(newItem);
-    return NextResponse.json(created, { status: 201 });
+    try {
+        const newItem = itemCreateSchema.parse(await request.json());
+        const created = await addItem(newItem);
+        return NextResponse.json(created, { status: 201 });
+    } catch {
+        return NextResponse.json(
+            { message: "Failed to fetch items" },
+            { status: 500 }
+        );
+    }
 }

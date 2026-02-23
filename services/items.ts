@@ -1,29 +1,31 @@
-import type { HydratedDocument } from "mongoose";
-
 import { connectToDatabase } from "@/lib/mongoose";
 import ItemModel, {
     Item,
-    ItemInput,
     ItemCreateInput,
     ItemUpdateInput,
+    toItem,
 } from "@/models/Item";
 
-type ItemDocument = HydratedDocument<ItemInput>;
-
-const toItem = (doc: ItemDocument): Item => doc.toObject<Item>();
-
+// TODO ** Paginate and limit to 10 per page
+// Build query with filters
 export async function getItems(): Promise<Item[]> {
     await connectToDatabase();
     const items = await ItemModel.find().exec();
     return items.map(item => toItem(item));
 }
 
-export async function getItem(id: string): Promise<Item | null> {
+export async function getItem(id: string): Promise<Item> {
     await connectToDatabase();
     const item = await ItemModel.findById(id).exec();
-    return item ? toItem(item) : null;
+
+    if (item === null) {
+        throw new Error("Item not found");
+    }
+
+    return toItem(item);
 }
 
+// Check for perms once RBAC has been implemented
 export async function addItem(newItem: ItemCreateInput): Promise<Item> {
     await connectToDatabase();
     const created = await ItemModel.create(newItem);
@@ -39,12 +41,22 @@ export async function updateItem(
         new: true,
         runValidators: true,
     }).exec();
-    return updated ? toItem(updated) : null;
+
+    if (updated === null) {
+        throw new Error("Item not found");
+    }
+    return toItem(updated);
 }
 
 // Concerned about potential unauthorized deletes as warned by demo.ts.
 export async function deleteItem(id: string): Promise<boolean> {
     await connectToDatabase();
-    const deleted = await ItemModel.findByIdAndDelete(id).exec();
-    return Boolean(deleted);
+
+    const item = await ItemModel.findById(id).exec();
+    if (item === null) {
+        throw new Error("Item not found");
+    }
+
+    const result = await item.deleteOne();
+    return result.deletedCount === 1;
 }

@@ -7,6 +7,7 @@ const objectIdSchema = z
     .regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId");
 
 // GET: fetch single item by id
+// TODO ** try catch
 export async function GET(_: Request, { params }: { params: { id: string } }) {
     const parsedId = objectIdSchema.safeParse(params.id);
     if (!parsedId.success) {
@@ -16,17 +17,25 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
         );
     }
 
-    const item = await getItem(parsedId.data);
-    if (!item) {
+    try {
+        const item = await getItem(parsedId.data);
+        if (!item) {
+            return NextResponse.json(
+                { message: "Item not found" },
+                { status: 404 }
+            );
+        }
+        return NextResponse.json(item, { status: 200 });
+    } catch {
         return NextResponse.json(
-            { message: "Item not found" },
-            { status: 404 }
+            { success: false, message: "Error occured while retrieving items" },
+            { status: 500 }
         );
     }
-    return NextResponse.json(item, { status: 202 });
 }
 
 // PUT: update an item by id
+// TODO ** Ensure proper item update with Zod schema
 export async function PUT(
     request: Request,
     { params }: { params: { id: string } }
@@ -36,17 +45,46 @@ export async function PUT(
         return NextResponse.json({ message: "Invalid id" }, { status: 400 });
     }
 
-    const updateData = await request.json();
+    const updateSchema = z.object({
+        name: z.string().optional(),
+        quantity: z.number().min(0).optional(),
+        threshold: z
+            .object({
+                minQuantity: z.number().min(0),
+                enabled: z.boolean(),
+            })
+            .optional(),
+    });
 
-    const updated = await updateItem(parsedId.data, updateData);
-    if (!updated) {
+    // Assuming updateSchema
+    const json = await request.json();
+    const parsedUpdate = updateSchema.safeParse(json);
+    if (!parsedUpdate.success) {
         return NextResponse.json(
-            { message: "Item not found" },
-            { status: 404 }
+            {
+                message: "Update doesn't follow schema",
+                issues: parsedUpdate.error.flatten(),
+            },
+            { status: 400 }
         );
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    try {
+        const updated = await updateItem(parsedId.data, parsedUpdate.data);
+        if (!updated) {
+            return NextResponse.json(
+                { message: "Item not found" },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(updated, { status: 200 });
+    } catch {
+        return NextResponse.json(
+            { success: false, message: "Error while updating data" },
+            { status: 500 }
+        );
+    }
 }
 
 // Should probably check for auth to prevent unauthorized deletes
@@ -60,13 +98,20 @@ export async function DELETE(
         return NextResponse.json({ message: "Invalid id" }, { status: 400 });
     }
 
-    const deleted = await deleteItem(params.id);
-    if (!deleted) {
+    try {
+        const deleted = await deleteItem(parsedId.data);
+        if (!deleted) {
+            return NextResponse.json(
+                { message: "Item not found" },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(deleted, { status: 200 });
+    } catch {
         return NextResponse.json(
-            { message: "Item not found" },
-            { status: 404 }
+            { success: false, message: "Error while deleting data" },
+            { status: 500 }
         );
     }
-
-    return NextResponse.json(deleted, { status: 200 });
 }
