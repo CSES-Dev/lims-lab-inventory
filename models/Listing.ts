@@ -23,5 +23,5 @@ listingSchema.index(
   { unique: true }
 );
 
-const listing = mongoose.models.Listing || model("Listing", listingSchema);
-export default listing;
+const Listing = mongoose.models.Listing || model("Listing", listingSchema);
+export default Listing;
