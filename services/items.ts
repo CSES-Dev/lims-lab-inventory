@@ -1,20 +1,69 @@
+import { connectToDatabase } from "@/lib/mongoose";
 import ItemModel, {
     Item,
     ItemCreateInput,
     ItemUpdateInput,
     toItem,
+    toItemFromLean,
 } from "@/models/Item";
+
+type getItemOptions = {
+    page?: number;
+    limit?: number;
+    labId?: string;
+    name?: string;
+};
 
 /**
  * Returns all items (Likely unused in favor of filteredGet)
  * @returns all items in the form of a JS Object
  */
 export async function getItems(): Promise<Item[]> {
-    const items = await ItemModel.find().exec();
-    return items.map(item => toItem(item));
+    const items = await ItemModel.find().lean().exec();
+    return items.map(item => toItemFromLean(item));
 }
 
-// filteredGet here
+/**
+ * Get items based on filter params
+ * @param options options for filtering (page number, entries per page, labId, and name)
+ * @returns filtered items in the form of a JS object
+ */
+export async function filteredGet(options: getItemOptions) {
+    await connectToDatabase();
+    const page = Math.max(1, Math.floor(options?.page ?? 1));
+    const limit = Math.max(1, Math.min(Math.floor(options?.limit ?? 10), 50));
+    const skip = (page - 1) * limit;
+
+    const query: any = {};
+
+    if (options?.labId) {
+        query.labId = options.labId;
+    }
+
+    if (options?.name?.trim()) {
+        query.name = { $regex: options.name.trim(), $options: "i" };
+    }
+
+    const [items, total] = await Promise.all([
+        ItemModel.find(query)
+            .sort({ createdAt: -1, _id: -1 }) // sorts by ID if same createdAt
+            .skip(skip)
+            .limit(limit)
+            .lean()
+            .exec(),
+        ItemModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+        data: items,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+        },
+    };
+}
 
 /**
  * Returns an item by id
@@ -22,8 +71,8 @@ export async function getItems(): Promise<Item[]> {
  * @returns the listing in the form of a JS Object
  */
 export async function getItem(id: string): Promise<Item | null> {
-    const item = await ItemModel.findById(id).exec();
-    return item ? toItem(item) : null;
+    const item = await ItemModel.findById(id).lean().exec();
+    return item ? toItemFromLean(item) : null;
 }
 
 /**

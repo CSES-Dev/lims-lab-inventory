@@ -43,9 +43,7 @@ const itemCreateSchema = z.object({
 // GET: fetch all items
 export async function GET() {
     const connectionResponse = await connect();
-    if (connectionResponse) {
-        return connectionResponse;
-    }
+    // if (connectionResponse) return connectionResponse; ?
 
     try {
         const items = await getItems();
@@ -58,14 +56,9 @@ export async function GET() {
     }
 }
 
-// GET FILTERED should go here
-
 // POST: add a new item
 export async function POST(request: Request) {
     const connectionResponse = await connect();
-    if (connectionResponse) {
-        return connectionResponse;
-    }
 
     const body = await request.json();
     const parsedBody = itemCreateSchema.safeParse(body);
