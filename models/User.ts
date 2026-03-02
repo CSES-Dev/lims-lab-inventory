@@ -1,55 +1,58 @@
-    import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-    export type Role = "PI" | "LAB_MANAGER" | "RESEARCHER" | "VIEWER";
+export type Role = "PI" | "LAB_MANAGER" | "RESEARCHER" | "VIEWER";
 
-    // describes what one lab membership looks like
-    export interface ILabMembership {
-        labId: string;
-        role: Role;
+// describes what one lab membership looks like
+export interface ILabMembership {
+    labId: string;
+    role: Role;
+}
+
+// shape of a user document in mongodb
+export interface IUser extends Document {
+    ucsdId: string; // ucsd pid
+    email: string; // ucsd email
+    name: {
+        first: string;
+        last: string;
+    };
+    permissions: Role[];
+    labs: ILabMembership[];
+    notificationPreferences: {
+        email: boolean;
+        sms: boolean;
+        inApp: boolean;
+    };
+    safety: {
+        trainingCompleted: string[];
+        clearanceLevel: string;
+        lastReviwedAt: Date;
+    };
+    profile: {
+        title: string;
+        department: string;
+        phone: string;
     }
+    status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+    createdAt: Date;
+    lastLoginAt: Date;
+}
 
-    // shape of a user document in mongodb
-    export interface IUser extends Document {
-        ucsdId: string;
-        email: string;
-        name: {
-            first: string;
-            last: string;
-        };
-        permissions: Role[];
-        labs: ILabMembership[];
-        notificationPreferences: {
-            email: boolean;
-            sms: boolean;
-            inApp: boolean;
-        };
-        safety: {
-            trainingCompleted: string[];
-            clearanceLevel: string;
-            lastReviwedAt: Date;
-        };
-        profile: {
-            title: string;
-            department: string;
-            phone: string;
-        }
-        status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-        createdAt: Date;
-        lastLoginAt: Date;
-    }
-
-
+// mongoose schema to valid the data
 const userSchema = new Schema<IUser>({
-    ucsdId: { type: String },
-    email: { type: String, required: true, unique: true },
+
+    ucsdId: { type: String }, // ucsd pid
+    email: { type: String, required: true, unique: true }, // ucsd email
 
     name: {
         first: { type: String, required: true },
         last: { type: String, required: true },
     },
-    permissions: [
+    permissions: [ // global roles - enum restricts to only these 4 valid roles
         { type: String, enum: ["PI", "LAB_MANAGER", "RESEARCHER", "VIEWER"] }
     ],
+    
+    // each entry represents membership in one lab
 
     labs: [
         {
@@ -61,11 +64,13 @@ const userSchema = new Schema<IUser>({
             },
         },
     ],
-    notificationPreferences: {
+    notificationPreferences: { // default notification preferences
         email: { type: Boolean, default: true },
         inApp: { type: Boolean, default: true },
-        sms: { type: Boolean, default: false },
+        sms: { type: Boolean, default: true },
     },
+
+    // checks for if you completed training and if you are cleared
     safety: {
         trainingCompleted: [{ type: String }],
         clearenceLevel: { type: String },
@@ -89,4 +94,6 @@ const userSchema = new Schema<IUser>({
     timestamps: true,
 });
 
+
+//creates and exports the mongoosem odel
 export const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
