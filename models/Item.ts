@@ -5,6 +5,8 @@ import {
     Schema,
     model,
     models,
+    FlattenMaps,
+    Types,
 } from "mongoose";
 
 // Fill enums with more items when more info is provided
@@ -64,10 +66,22 @@ export type Item = { id: string } & Omit<ItemInput, "_id">;
 
 export type ItemCreateInput = Omit<ItemInput, "createdAt" | "updatedAt">;
 export type ItemUpdateInput = Partial<ItemCreateInput>;
+
 export type ItemDocument = HydratedDocument<ItemInput>;
+
+export type ItemLean = FlattenMaps<ItemInput> & { _id: Types.ObjectId };
 
 const ItemModel: Model<ItemInput> =
     (models.Item as Model<ItemInput>) || model<ItemInput>("Item", itemSchema);
 export default ItemModel;
 
 export const toItem = (doc: ItemDocument): Item => doc.toObject<Item>();
+
+export const toItemFromLean = (obj: ItemLean): Item => {
+    const { _id, ...rest } = obj as any;
+
+    return {
+        ...(rest as Omit<ItemInput, "_id">),
+        id: String(_id),
+    };
+};
