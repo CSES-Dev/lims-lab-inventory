@@ -10,7 +10,7 @@
 'use server'
 
 import { NextResponse } from "next/server";
-import { getLabs, addLab } from "@/services/labs";
+import { getLabs, addLab } from "@/services/labs/labs";
 
 // Implement pagination later on (if necessary)
 // const PAGE_SIZE = 10;

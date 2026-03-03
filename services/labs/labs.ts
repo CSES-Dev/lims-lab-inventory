@@ -1,11 +1,9 @@
 import type { HydratedDocument }from "mongoose";
 
 import { connectToDatabase } from "@/lib/mongoose";
-import LabModel, { Lab, LabInput } from "@/models/Lab";
+import LabModel, { Lab, LabInput, toLab, toLabFromLean } from "@/models/Lab";
 
 type LabDocument = HydratedDocument<LabInput>;
-
-const toLab = (doc: LabDocument): Lab => doc.toObject<Lab>();
 
 /**
  * Get all lab entries
@@ -13,9 +11,11 @@ const toLab = (doc: LabDocument): Lab => doc.toObject<Lab>();
  */
 export async function getLabs(): Promise<Lab[]> {
     await connectToDatabase();
-    const labs = await LabModel.find().exec();
-    return labs.map(lab => toLab(lab));
-
+    const labs = await LabModel.find()
+        .sort({ createdAt: -1})
+        .lean()
+        .exec();
+    return labs.map(lab => toLabFromLean(lab));
 }
 
 /**
@@ -25,8 +25,8 @@ export async function getLabs(): Promise<Lab[]> {
  */
 export async function getLab(id: string): Promise<Lab | null> {
     await connectToDatabase();
-    const lab = await LabModel.findById(id).exec();
-    return lab ? toLab(lab) : null;
+    const lab = await LabModel.findById(id).lean().exec();
+    return lab ? toLabFromLean(lab) : null;
 }
 
 /**
@@ -67,6 +67,10 @@ export async function updateLab(
 // Could be used accidentally or misused maliciously to get rid of important data
 export async function deleteLab(id: string): Promise<boolean> {
     await connectToDatabase();
-    const deleted = await LabModel.findByIdAndDelete(id).exec();
+    const lab = await LabModel.findById(id).exec();
+    if (!lab) {
+        throw new Error(`Lab with ID ${id} not found`);
+    }
+    const deleted = await lab.deleteOne();
     return Boolean(deleted);
 }

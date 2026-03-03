@@ -11,7 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getLab, updateLab, deleteLab } from "@/services/labs";
+import { getLab, updateLab, deleteLab } from "@/services/labs/labs";
 
 type Params = { id: string };
 
