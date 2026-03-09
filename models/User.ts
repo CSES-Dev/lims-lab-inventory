@@ -1,10 +1,10 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type Role = "PI" | "LAB_MANAGER" | "RESEARCHER" | "VIEWER";
 
 // describes what one lab membership looks like
 export interface ILabMembership {
-    labId: string;
+    labId: Types.ObjectId;
     role: Role;
 }
 
@@ -16,7 +16,7 @@ export interface IUser extends Document {
         first: string;
         last: string;
     };
-    permissions: Role[];
+    role: Role;
     labs: ILabMembership[];
     notificationPreferences: {
         email: boolean;
@@ -26,7 +26,7 @@ export interface IUser extends Document {
     safety: {
         trainingCompleted: string[];
         clearanceLevel: string;
-        lastReviwedAt: Date;
+        lastReviewedAt: Date;
     };
     profile: {
         title: string;
@@ -41,22 +41,24 @@ export interface IUser extends Document {
 // mongoose schema to valid the data
 const userSchema = new Schema<IUser>({
 
-    ucsdId: { type: String }, // ucsd pid
+    ucsdId: { type: String, required: true, unique: true }, // ucsd pid
     email: { type: String, required: true, unique: true }, // ucsd email
 
     name: {
         first: { type: String, required: true },
         last: { type: String, required: true },
     },
-    permissions: [ // global roles - enum restricts to only these 4 valid roles
-        { type: String, enum: ["PI", "LAB_MANAGER", "RESEARCHER", "VIEWER"] }
-    ],
+    role: { // global role - enum restricts to only these 4 valid roles
+        type: String,
+        enum: ["PI", "LAB_MANAGER", "RESEARCHER", "VIEWER"],
+        required: true,
+    },
     
     // each entry represents membership in one lab
 
     labs: [
         {
-            labId: { type: String, required: true },
+            labId: { type: Schema.Types.ObjectId, ref: "Lab", required: true },
             role: {
                 type: String,
                 enum: ["PI", "LAB_MANAGER", "RESEARCHER", "VIEWER"],
@@ -67,13 +69,13 @@ const userSchema = new Schema<IUser>({
     notificationPreferences: { // default notification preferences
         email: { type: Boolean, default: true },
         inApp: { type: Boolean, default: true },
-        sms: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
     },
 
     // checks for if you completed training and if you are cleared
     safety: {
         trainingCompleted: [{ type: String }],
-        clearenceLevel: { type: String },
+        clearanceLevel: { type: String },
         lastReviewedAt: { type: Date },
     },
 

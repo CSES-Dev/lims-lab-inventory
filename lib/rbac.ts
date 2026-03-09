@@ -1,6 +1,6 @@
 import { connectToDatabase } from "@/lib/mongoose";
 import { auth } from "@/auth";
-import { User, Role } from "@/models/User";
+import { User, Role, IUser } from "@/models/User";
 
 // establish the role permissions
 
@@ -36,18 +36,20 @@ export async function getSession(permission: string) {
     const session = await auth();
 
     if (!session?.user?.email) {
-        return { allowed: false, user: null };
+        return { allowed: false, user: null, reason: "Unauthenticated" };
     }
 
     await connectToDatabase();
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ email: session.user.email }).lean<IUser>();
 
     if (!user){
-        return { allowed: false, user: null };
+        return { allowed: false, user: null, reason: "User not found" };
     }
 
-    const allowed = (user.permissions as Role[]).some(
-        (role) => ROLE_PERMISSIONS[role]?.includes(permission)
-    );
-    return { allowed, user };
+    if (user.status !== "ACTIVE") {
+        return { allowed: false, user, reason: "Account inactive" };
+    }
+
+    const allowed = ROLE_PERMISSIONS[user.role]?.includes(permission) ?? false;
+    return { allowed, user, reason: allowed ? undefined : "Insufficient permissions" };
 }
