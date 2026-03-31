@@ -6,6 +6,7 @@ import ItemModel, {
     toItem,
     toItemFromLean,
 } from "@/models/Item";
+import { getSession } from "@/lib/rbac";
 
 type getItemOptions = {
     page?: number;
@@ -19,6 +20,12 @@ type getItemOptions = {
  * @returns all items in the form of a JS Object
  */
 export async function getItems(): Promise<Item[]> {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+    await connectToDatabase();
     const items = await ItemModel.find().lean().exec();
     return items.map(item => toItemFromLean(item));
 }
@@ -71,6 +78,7 @@ export async function filteredGet(options: getItemOptions) {
  * @returns the listing in the form of a JS Object
  */
 export async function getItem(id: string): Promise<Item | null> {
+    await connectToDatabase();
     const item = await ItemModel.findById(id).lean().exec();
     return item ? toItemFromLean(item) : null;
 }
@@ -81,6 +89,7 @@ export async function getItem(id: string): Promise<Item | null> {
  * @returns the added item in the form of a JS Object
  */
 export async function addItem(newItem: ItemCreateInput): Promise<Item> {
+    await connectToDatabase();
     const created = await ItemModel.create(newItem);
     return toItem(created);
 }
@@ -96,6 +105,7 @@ export async function updateItem(
     id: string,
     data: ItemUpdateInput
 ): Promise<Item | null> {
+    await connectToDatabase();
     const updated = await ItemModel.findByIdAndUpdate(id, data, {
         new: true,
         runValidators: true,
@@ -111,6 +121,7 @@ export async function updateItem(
 // Don't use this for tables where nothing needs to be deleted
 // Could be accidentally or maliciously used to get rid of important data
 export async function deleteItem(id: string): Promise<boolean> {
+    await connectToDatabase();
     const deleted = await ItemModel.findByIdAndDelete(id).exec();
     return Boolean(deleted);
 }

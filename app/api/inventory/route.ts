@@ -5,20 +5,8 @@ import {
     notificationAudienceValues,
     notificationEventValues,
 } from "@/models/Item";
-import { addItem, getItems } from "@/services/items";
-import { connectToDatabase } from "@/lib/mongoose";
-
-// Only returns a Next response upon failed connection
-async function connect() {
-    try {
-        await connectToDatabase();
-    } catch {
-        return NextResponse.json(
-            { success: false, message: "Error connecting to database" },
-            { status: 500 }
-        );
-    }
-}
+import { addItem, filteredGet } from "@/services/items";
+import { connect } from "@/lib/db";
 
 const thresholdSchema = z.object({
     minQuantity: z.number().int().nonnegative(),
@@ -46,7 +34,10 @@ export async function GET() {
     // if (connectionResponse) return connectionResponse; ?
 
     try {
-        const items = await getItems();
+        const items = await filteredGet({
+            page: 1,
+            limit: 10,
+        }); // swap to getItems() if needed
         return NextResponse.json(items, { status: 200 });
     } catch {
         return NextResponse.json(
