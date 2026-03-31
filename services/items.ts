@@ -29,7 +29,6 @@ export async function getItems(): Promise<Item[]> {
  * @returns filtered items in the form of a JS object
  */
 export async function filteredGet(options: getItemOptions) {
-    await connectToDatabase();
     const page = Math.max(1, Math.floor(options?.page ?? 1));
     const limit = Math.max(1, Math.min(Math.floor(options?.limit ?? 10), 50));
     const skip = (page - 1) * limit;

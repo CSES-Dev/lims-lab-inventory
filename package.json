@@ -13,13 +13,15 @@
         "lint-fix": "(eslint --fix --cache --report-unused-disable-directives . || true) && prettier --write .",
         "lint-check": "eslint --cache --report-unused-disable-directives . && prettier --check .",
         "prepare": "husky",
-        "test": "playwright test"
+        "test": "playwright test",
+        "inv-test": "jest"
     },
     "dependencies": {
         "@playwright/test": "^1.49.0",
         "@radix-ui/react-slot": "^1.1.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "dotenv": "^17.3.1",
         "lucide-react": "^0.464.0",
         "mongoose": "^8.9.0",
         "next": "^15.0.3",
@@ -30,6 +32,7 @@
         "zod": "^4.1.12"
     },
     "devDependencies": {
+        "@types/jest": "^30.0.0",
         "@types/node": "^20",
         "@types/react": "^18",
         "@types/react-dom": "^18",
@@ -40,10 +43,12 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-import": "^2.31.0",
         "husky": "^9.1.7",
+        "jest": "^30.3.0",
         "postcss": "^8",
         "prettier": "^3.3.3",
         "tailwindcss": "^3.4.1",
         "tailwindcss-animate": "^1.0.7",
-        "typescript": "^5"
+        "ts-jest": "^29.4.6",
+        "typescript": "^5.9.3"
     }
 }
