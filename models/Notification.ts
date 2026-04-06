@@ -7,7 +7,8 @@ const notificationSchema = new Schema({
     resourceId: { type: String, required: true },
     recipients: [
         {
-            role: { type: String },
+            type: [String],
+            enum: ["PI", "LAB_MANAGER", "RESEARCHER"],
             required: true
         }
     ],
