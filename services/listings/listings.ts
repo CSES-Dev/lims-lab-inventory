@@ -38,7 +38,7 @@ async function getFilteredListings({
   const validPage = isNaN(page) || page < 1 ? 1 : page;
   const validLimit =
     isNaN(limit) || limit < 1 ? 10 : Math.min(limit, MAX_LIMIT);
-  const skip = (page - 1) * validLimit;
+  const skip = (validPage - 1) * validLimit;
 
   const [listings, total] = await Promise.all([
     ListingModel.find(query)
@@ -110,6 +110,7 @@ async function deleteListing(id: string): Promise<boolean> {
 }
 
 export {
+  getListings,
   getFilteredListings,
   getListing,
   addListing,

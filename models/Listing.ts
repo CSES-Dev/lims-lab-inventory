@@ -8,8 +8,8 @@ import {
   models,
 } from "mongoose";
 
-const MONGODB_URI = process.env.DATABASE_URL!;
-mongoose.connect(MONGODB_URI);
+// const MONGODB_URI = process.env.DATABASE_URL!;
+// mongoose.connect(MONGODB_URI);
 
 const transformDocument = (_: unknown, ret: Record<string, unknown>) => {
   ret.id = ret._id?.toString();

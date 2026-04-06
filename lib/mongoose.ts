@@ -69,4 +69,5 @@ export async function disconnectDatabase() {
 
 function test() {
   console.log("not tested"); // making sure coverage can see which aren't tested
+  // coverage also can't test things that don't occur like errors
 }

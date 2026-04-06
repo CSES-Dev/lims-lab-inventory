@@ -24,21 +24,15 @@ const config: Config = {
 
   // Coverage settings
   collectCoverageFrom: [
-    "app/*/.ts",
-    "app/*/.tsx",
-    "app/api/listings/route.ts",
-    "app/api/listings/[id]/route.ts",
-    "services/*/.ts",
-    "services/listings/listings.ts",
-    "models/*/.ts",
-    // "lib/**/*.ts", // Include all TypeScript files in the lib directory
-    // "!lib/**/*.d.ts", // Exclude type declaration files
-    // "!lib/__tests__/**/*.ts", // Exclude test files
-    "lib/*/.ts",
-    "!*/.d.ts",
-    "!*/node_modules/*",
-    "!*/.next/*",
-    "!*/coverage/*",
+    "services/listings/listings.ts", // Include the service file for listings
+    "app/api/listings/**/*.ts", // Include all route files for the listings API
+    "lib/**/mongoose.ts", // include the mongoose test given
+    "!app/api/listings/**/__tests__/**/*.ts", // Exclude test files in the listings API
+    "!services/listings/**/__tests__/**/*.ts", // Exclude test files in the listings service
+    "!**/*.d.ts", // Exclude type declaration files
+    "!**/node_modules/**", // Exclude node_modules
+    "!**/.next/**", // Exclude Next.js build files
+    "!**/coverage/**", // Exclude coverage files
   ],
 
   coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/coverage/"],
