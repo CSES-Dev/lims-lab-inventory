@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type Role = "PI" | "LAB_MANAGER" | "RESEARCHER" | "VIEWER";
+export type Status = "ACTIVE" | "INACTIVE" | "SUSPENDED";
 
 // describes what one lab membership looks like
 export interface ILabMembership {
@@ -33,7 +34,7 @@ export interface IUser extends Document {
         department: string;
         phone: string;
     }
-    status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+    status: Status;
     createdAt: Date;
     lastLoginAt: Date;
 }
@@ -42,7 +43,9 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
 
     ucsdId: { type: String, required: true, unique: true }, // ucsd pid
-    email: { type: String, required: true, unique: true }, // ucsd email
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true,
+        match:[/^\S+@ucsd\.edu$/, "Must be a valid UCSD email (@ucsd.edu)"],
+    }, // ucsd email
 
     name: {
         first: { type: String, required: true },
@@ -95,7 +98,8 @@ const userSchema = new Schema<IUser>({
 {
     timestamps: true,
 });
+userSchema.index({"labs.labId": 1});
 
 
-//creates and exports the mongoosem odel
+//creates and exports the mongoose model
 export const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
