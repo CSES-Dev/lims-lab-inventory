@@ -1,6 +1,13 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
-export type UserLabRole = "member" | "lead" | "admin";
+export const userLabRoleValues = [
+  "PI",
+  "LAB_MANAGER",
+  "RESEARCHER",
+  "VIEWER",
+] as const;
+
+export type UserLabRole = (typeof userLabRoleValues)[number];
 
 export interface IUserLab extends Document {
   user: Types.ObjectId;
@@ -25,8 +32,8 @@ const userLabSchema = new Schema<IUserLab>(
     },
     role: {
       type: String,
-      enum: ["member", "lead", "admin"],
-      default: "member",
+      enum: userLabRoleValues,
+      default: "VIEWER",
     },
     joinedAt: {
       type: Date,
