@@ -3,20 +3,27 @@ import type { HydratedDocument }from "mongoose";
 import { connectToDatabase } from "@/lib/mongoose";
 import LabModel, { Lab, LabInput, toLab, toLabFromLean } from "@/models/Lab";
 
-type LabDocument = HydratedDocument<LabInput>;
+export type GetLabOptions = { page?: number; limit?: number };
+export type LabPayload = Pick<Lab, "name" | "department" | "createdAt">;
 
 /**
  * Get all lab entries
  * @returns an array of labs
  */
-export async function getLabs(): Promise<Lab[]> {
+export async function getLabs(options?: GetLabOptions) {
     await connectToDatabase();
-    const labs = await LabModel.find()
-        .sort({ createdAt: -1})
-        .lean()
-        .exec();
-    return labs.map(lab => toLabFromLean(lab));
-}
+    const page = Math.max(options?.page ?? 1, 1);
+    const limit = Math.max(options?.limit ?? 10, 1);
+    const skip = (page - 1) * limit;
+
+    const [labs, total] = await Promise.all([
+        LabModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean().exec(),
+        LabModel.countDocuments().exec(),
+    ]);
+
+    return {data: labs.map(lab => toLabFromLean(lab)), pagination: {page, limit, total, totalPages: Math.ceil(total / limit)}};
+};
+
 
 /**
  * Get a lab entry by ID

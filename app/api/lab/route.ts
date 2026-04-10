@@ -10,10 +10,15 @@
 'use server'
 
 import { NextResponse } from "next/server";
-import { getLabs, addLab } from "@/services/labs/labs";
+import { z } from "zod";
+import { getLabs, addLab, GetLabOptions } from "@/services/labs/labs";
+import type { Lab } from "@/models/Lab";
 
-// Implement pagination later on (if necessary)
-// const PAGE_SIZE = 10;
+const labCreateSchema = z.object({
+    name: z.string().min(1),
+    department: z.string().min(1),
+    createdAt: z.coerce.date().optional(),
+});
 
 /**
  * Fetch all lab entries
@@ -22,15 +27,12 @@ import { getLabs, addLab } from "@/services/labs/labs";
  */
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    /*
-    For later use in pagination:
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    */
     try {
-        // Fetch all lab entries from the database and return them in the response
-        const labs = await getLabs();
-        return NextResponse.json(labs, { status: 200 });
+        const opts: GetLabOptions = { page, limit };
+        const result = await getLabs(opts);
+        return NextResponse.json(result, { status: 200 });
     } catch (err) {
         console.error(err);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
@@ -44,8 +46,11 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
     try {
-        // Connect to the database and create a new lab entry with the request body
-        const newLab = await addLab(await request.json());
+        const parsed = labCreateSchema.safeParse(await request.json());
+        if (!parsed.success) {
+            return NextResponse.json({ message: "Invalid data" }, { status: 400 });
+        }
+        const newLab = await addLab(parsed.data as unknown as Lab);
         return NextResponse.json(newLab, { status: 201 });
     } catch (err) {
         console.error(err);
