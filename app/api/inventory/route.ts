@@ -6,7 +6,6 @@ import {
     notificationEventValues,
 } from "@/models/Item";
 import { addItem, filteredGet } from "@/services/items";
-import { connect } from "@/lib/db";
 
 const thresholdSchema = z.object({
     minQuantity: z.number().int().nonnegative(),
@@ -30,9 +29,6 @@ const itemCreateSchema = z.object({
 
 // GET: fetch all items
 export async function GET() {
-    const connectionResponse = await connect();
-    // if (connectionResponse) return connectionResponse; ?
-
     try {
         const items = await filteredGet({
             page: 1,
@@ -49,8 +45,6 @@ export async function GET() {
 
 // POST: add a new item
 export async function POST(request: Request) {
-    const connectionResponse = await connect();
-
     const body = await request.json();
     const parsedBody = itemCreateSchema.safeParse(body);
 

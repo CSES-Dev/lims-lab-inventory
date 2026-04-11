@@ -1,3 +1,5 @@
+// Outdated
+
 import { connectToDatabase } from "./mongoose";
 import { NextResponse } from "next/server";
 
