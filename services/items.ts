@@ -1,4 +1,4 @@
-import { connectToDatabase } from "@/lib/mongoose";
+import { connect } from "@/lib/db";
 import ItemModel, {
     Item,
     ItemCreateInput,
@@ -19,6 +19,7 @@ type getItemOptions = {
  * @returns all items in the form of a JS Object
  */
 export async function getItems(): Promise<Item[]> {
+    await connect();
     const items = await ItemModel.find().lean().exec();
     return items.map(item => toItemFromLean(item));
 }
@@ -29,6 +30,7 @@ export async function getItems(): Promise<Item[]> {
  * @returns filtered items in the form of a JS object
  */
 export async function filteredGet(options: getItemOptions) {
+    await connect();
     const page = Math.max(1, Math.floor(options?.page ?? 1));
     const limit = Math.max(1, Math.min(Math.floor(options?.limit ?? 10), 50));
     const skip = (page - 1) * limit;
@@ -70,6 +72,7 @@ export async function filteredGet(options: getItemOptions) {
  * @returns the listing in the form of a JS Object
  */
 export async function getItem(id: string): Promise<Item | null> {
+    await connect();
     const item = await ItemModel.findById(id).lean().exec();
     return item ? toItemFromLean(item) : null;
 }
@@ -80,6 +83,7 @@ export async function getItem(id: string): Promise<Item | null> {
  * @returns the added item in the form of a JS Object
  */
 export async function addItem(newItem: ItemCreateInput): Promise<Item> {
+    await connect();
     const created = await ItemModel.create(newItem);
     return toItem(created);
 }
@@ -95,6 +99,7 @@ export async function updateItem(
     id: string,
     data: ItemUpdateInput
 ): Promise<Item | null> {
+    await connect();
     const updated = await ItemModel.findByIdAndUpdate(id, data, {
         new: true,
         runValidators: true,
@@ -110,6 +115,7 @@ export async function updateItem(
 // Don't use this for tables where nothing needs to be deleted
 // Could be accidentally or maliciously used to get rid of important data
 export async function deleteItem(id: string): Promise<boolean> {
+    await connect();
     const deleted = await ItemModel.findByIdAndDelete(id).exec();
     return Boolean(deleted);
 }

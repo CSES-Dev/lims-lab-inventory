@@ -6,7 +6,6 @@ import {
     notificationAudienceValues,
     notificationEventValues,
 } from "@/models/Item";
-import { connect } from "@/lib/db";
 
 const objectIdSchema = z
     .string()
@@ -17,7 +16,6 @@ const zEnumFromConst = <T extends readonly [string, ...string[]]>(values: T) =>
 
 // GET: get an item by id
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-    const connectionResponse = await connect();
     const parsedId = objectIdSchema.safeParse(params.id);
     if (!parsedId.success) {
         return NextResponse.json(
@@ -48,7 +46,6 @@ export async function PUT(
     request: Request,
     { params }: { params: { id: string } }
 ) {
-    const connectionResponse = await connect();
     const parsedId = objectIdSchema.safeParse(params.id);
     if (!parsedId.success) {
         return NextResponse.json({ message: "Invalid id" }, { status: 400 });
@@ -116,7 +113,6 @@ export async function DELETE(
     _: Request,
     { params }: { params: { id: string } }
 ) {
-    const connectionResponse = await connect();
     const parsedId = objectIdSchema.safeParse(params.id);
     if (!parsedId.success) {
         return NextResponse.json({ message: "Invalid id" }, { status: 400 });
