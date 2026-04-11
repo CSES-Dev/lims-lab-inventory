@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import {
   HydratedDocument,
   InferSchemaType,
@@ -8,9 +7,6 @@ import {
   models,
 } from "mongoose";
 
-// const MONGODB_URI = process.env.DATABASE_URL!;
-// mongoose.connect(MONGODB_URI);
-
 const transformDocument = (_: unknown, ret: Record<string, unknown>) => {
   ret.id = ret._id?.toString();
   delete ret._id;
@@ -19,11 +15,29 @@ const transformDocument = (_: unknown, ret: Record<string, unknown>) => {
 
 const listingSchema = new Schema(
   {
+    itemName: { type: String, required: true },
     itemId: { type: String, required: true },
+    labName: { type: String },
+    labLocation: { type: String },
     labId: { type: String, required: true },
+    imageUrls: [{ type: String }],
     quantityAvailable: { type: Number, required: true },
-    status: { type: String, enum: ["ACTIVE", "INACTIVE"], required: true },
     createdAt: { type: Date, required: true },
+    expiryDate: { type: Date },
+    description: { type: String, default: "" },
+    price: { type: Number, default: 0 },
+    status: { type: String, enum: ["ACTIVE", "INACTIVE"], required: true },
+    condition: {
+      type: String,
+      enum: ["New", "Good", "Fair", "Poor"],
+      required: true,
+    },
+    hazardTags: [
+      {
+        type: String,
+        enum: ["Physical", "Chemical", "Biological", "Other"],
+      },
+    ],
   },
   {
     toJSON: { virtuals: true, versionKey: false, transform: transformDocument },
@@ -38,6 +52,8 @@ const listingSchema = new Schema(
 // for filtering
 listingSchema.index({ labId: 1, createdAt: -1 });
 listingSchema.index({ itemId: 1, createdAt: -1 });
+listingSchema.index({ expiryDate: 1 });
+listingSchema.index({ hazardTags: 1 });
 
 export type ListingInput = InferSchemaType<typeof listingSchema>;
 export type Listing = ListingInput & { id: string };

@@ -12,10 +12,23 @@ const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId");
 const listingValidationSchema = z.object({
-  itemId: z.string().min(1),
-  labId: z.string().min(1),
-  quantityAvailable: z.number().min(1),
+  // handle defaults here for the optional fields
+  itemName: z.string(),
+  itemId: z.string(),
+  labName: z.string().optional().default(""),
+  labLocation: z.string().optional().default(""),
+  labId: z.string(),
+  imageUrls: z.array(z.string()).optional().default([]),
+  quantityAvailable: z.number(),
+  expiryDate: z.date().optional(),
+  description: z.string().optional().default(""),
+  price: z.number().optional().default(0),
   status: z.enum(["ACTIVE", "INACTIVE"]),
+  condition: z.enum(["New", "Good", "Fair", "Poor"]),
+  hazardTags: z
+    .array(z.enum(["Physical", "Chemical", "Biological", "Other"]))
+    .optional()
+    .default([]),
 });
 
 /**

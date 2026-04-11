@@ -2,13 +2,26 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
 import { z } from "zod";
 import { getFilteredListings, addListing } from "@/services/listings/listings";
+import { ListingInput } from "@/models/Listing";
 
-/* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
 const listingValidationSchema = z.object({
-  itemId: z.string().min(1),
-  labId: z.string().min(1),
-  quantityAvailable: z.number().min(1),
+  // handle defaults here for the optional fields
+  itemName: z.string(),
+  itemId: z.string(),
+  labName: z.string().optional().default(""),
+  labLocation: z.string().optional().default(""),
+  labId: z.string(),
+  imageUrls: z.array(z.string()).optional().default([]),
+  quantityAvailable: z.number(),
+  expiryDate: z.date().optional(),
+  description: z.string().optional().default(""),
+  price: z.number().optional().default(0),
   status: z.enum(["ACTIVE", "INACTIVE"]),
+  condition: z.enum(["New", "Good", "Fair", "Poor"]),
+  hazardTags: z
+    .array(z.enum(["Physical", "Chemical", "Biological", "Other"]))
+    .optional()
+    .default([]),
 });
 
 /**
@@ -88,7 +101,10 @@ async function POST(request: Request) {
   }
 
   try {
-    const listingData = { ...parsedBody.data, createdAt: new Date() };
+    const listingData = {
+      ...parsedBody.data,
+      createdAt: new Date(),
+    } as ListingInput;
     const listing = await addListing(listingData);
     return NextResponse.json(
       {
