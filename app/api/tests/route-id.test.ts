@@ -1,6 +1,5 @@
 import { GET, PUT, DELETE } from "../inventory/[id]/route";
 import { getItem, updateItem, deleteItem } from "@/services/items";
-import { connect } from "@/lib/db";
 
 // GET by id 200 success
 // GET id 404 not found
@@ -9,9 +8,6 @@ import { connect } from "@/lib/db";
 // DELETE 200 success
 // DELETE 404 not found failure
 
-jest.mock("@/lib/db", () => ({
-    connect: jest.fn(),
-}));
 jest.mock("@/services/items", () => ({
     getItem: jest.fn(),
     updateItem: jest.fn(),
@@ -38,7 +34,6 @@ describe("api/inventory/[id]/", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        (connect as jest.Mock).mockResolvedValue(null);
     });
 
     describe("GET /api/inventory/[id]/", () => {
@@ -54,7 +49,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(getItem).toHaveBeenCalledWith("1234abcd1234abcd1234abcd");
             expect(response.status).toBe(200);
             expect(body).toEqual(mockItem);
@@ -72,7 +66,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(getItem).toHaveBeenCalledWith("22223333444455556666aaaa");
             expect(response.status).toBe(404);
             expect(body).toEqual({
@@ -109,7 +102,7 @@ describe("api/inventory/[id]/", () => {
                         },
                         notificationPolicy: {
                             event: "LOW_STOCK",
-                            audience: "LAB_ADMINS",
+                            audience: "LAB_MANAGER",
                         },
                     }),
                 }
@@ -121,7 +114,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(updateItem).toHaveBeenCalled();
             expect(updateItem).toHaveBeenCalledWith(
                 "1234abcd1234abcd1234abcd",
@@ -154,7 +146,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(updateItem).not.toHaveBeenCalled();
             expect(response.status).toBe(400);
             expect(body).toHaveProperty("message");
@@ -176,7 +167,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(deleteItem).toHaveBeenCalledWith("1234abcd1234abcd1234abcd");
             expect(response.status).toBe(200);
             expect(body).toEqual(mockItem);
@@ -196,7 +186,6 @@ describe("api/inventory/[id]/", () => {
 
             const body = await response.json();
 
-            expect(connect).toHaveBeenCalled();
             expect(deleteItem).toHaveBeenCalledWith("2234abcd1234abcd1234abcd");
             expect(response.status).toBe(404);
             expect(body).toEqual({

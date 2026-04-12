@@ -1,6 +1,5 @@
 import { GET, POST } from "../inventory/route";
 import { filteredGet, addItem } from "@/services/items";
-import { connect } from "@/lib/db";
 
 // GET 200 success
 // GET 500 failure
@@ -8,9 +7,6 @@ import { connect } from "@/lib/db";
 // POST 400 invalid input
 // POST 500 server error
 
-jest.mock("@/lib/db", () => ({
-    connect: jest.fn(),
-}));
 jest.mock("@/services/items", () => ({
     filteredGet: jest.fn(),
     addItem: jest.fn(),
@@ -34,8 +30,6 @@ describe("/api/inventory/", () => {
         });
 
         it("GET returns items successfully with status 200", async () => {
-            (connect as jest.Mock).mockResolvedValue(null);
-
             const mockItems = {
                 data: [
                     { id: "1", name: "Gloves", quantity: 10 },
@@ -57,7 +51,6 @@ describe("/api/inventory/", () => {
             expect(response.status).toBe(200);
             expect(body).toEqual(mockItems);
 
-            expect(connect).toHaveBeenCalledTimes(1);
             expect(filteredGet).toHaveBeenCalledWith({
                 page: 1,
                 limit: 10,
@@ -65,7 +58,6 @@ describe("/api/inventory/", () => {
         });
 
         it("GET returns with status 500 on failure", async () => {
-            (connect as jest.Mock).mockResolvedValue(null);
             (filteredGet as jest.Mock).mockRejectedValue(
                 new Error("DB failure")
             );
@@ -84,8 +76,6 @@ describe("/api/inventory/", () => {
         });
 
         it("POST returns 201 when item successfully created", async () => {
-            (connect as jest.Mock).mockResolvedValue(null);
-
             const validBody = {
                 labId: "test-lab",
                 name: "Tubes",
@@ -98,7 +88,7 @@ describe("/api/inventory/", () => {
                 },
                 notificationPolicy: {
                     event: "LOW_STOCK",
-                    audience: "LAB_ADMINS",
+                    audience: "LAB_MANAGER",
                 },
             };
 
@@ -116,13 +106,10 @@ describe("/api/inventory/", () => {
             expect(response.status).toBe(201);
             expect(body).toEqual(createdItem);
 
-            expect(connect).toHaveBeenCalledTimes(1);
             expect(addItem).toHaveBeenCalledTimes(1);
         });
 
         it("POST returns 400 when item input is invalid", async () => {
-            (connect as jest.Mock).mockResolvedValue(null);
-
             const invalidBody = {
                 labId: "",
             };
@@ -137,13 +124,10 @@ describe("/api/inventory/", () => {
                 message: "Invalid request body.",
             });
 
-            expect(connect).toHaveBeenCalledTimes(1);
             expect(addItem).not.toHaveBeenCalled();
         });
 
         it("POST returns 500 when service throws error", async () => {
-            (connect as jest.Mock).mockResolvedValue(null);
-
             const validBody = {
                 labId: "test-lab",
                 name: "Tubes",
@@ -156,7 +140,7 @@ describe("/api/inventory/", () => {
                 },
                 notificationPolicy: {
                     event: "LOW_STOCK",
-                    audience: "LAB_ADMINS",
+                    audience: "LAB_MANAGER",
                 },
             };
 
@@ -171,7 +155,6 @@ describe("/api/inventory/", () => {
                 message: "Error occured while creating item",
             });
 
-            expect(connect).toHaveBeenCalledTimes(1);
             expect(addItem).toHaveBeenCalledTimes(1);
         });
     });
