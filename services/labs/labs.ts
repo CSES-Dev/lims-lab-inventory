@@ -41,7 +41,7 @@ export async function getLab(id: string): Promise<Lab | null> {
  * @param newLab the lab data to add
  * @returns the created lab
  */
-export async function addLab(newLab: Lab): Promise<Lab> {
+export async function addLab(newLab: LabInput | Omit<Lab, 'id'>): Promise<Lab> {
     await connectToDatabase();
     const createdLab = await LabModel.create(newLab);
     return toLab(createdLab);
@@ -76,7 +76,7 @@ export async function deleteLab(id: string): Promise<boolean> {
     await connectToDatabase();
     const lab = await LabModel.findById(id).exec();
     if (!lab) {
-        throw new Error(`Lab with ID ${id} not found`);
+        return false;
     }
     const deleted = await lab.deleteOne();
     return Boolean(deleted);

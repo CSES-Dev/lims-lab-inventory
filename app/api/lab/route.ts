@@ -12,7 +12,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getLabs, addLab, GetLabOptions } from "@/services/labs/labs";
-import type { Lab } from "@/models/Lab";
 
 const labCreateSchema = z.object({
     name: z.string().min(1),
@@ -50,10 +49,14 @@ export async function POST(request: Request) {
         if (!parsed.success) {
             return NextResponse.json({ message: "Invalid data" }, { status: 400 });
         }
-        const newLab = await addLab(parsed.data as unknown as Lab);
+        const newLab = await addLab({
+            name: parsed.data.name, 
+            department: parsed.data.department, 
+            createdAt: parsed.data.createdAt || new Date()
+        });
         return NextResponse.json(newLab, { status: 201 });
     } catch (err) {
         console.error(err);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
-}
+} 
