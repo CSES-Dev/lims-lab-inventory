@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
-import { z } from "zod";
+import { number, z } from "zod";
 import { getFilteredListings, addListing } from "@/services/listings/listings";
 import { ListingInput } from "@/models/Listing";
+import { uploadImage } from "@/lib/googleCloud";
 
 const listingValidationSchema = z.object({
   // handle defaults here for the optional fields
@@ -72,7 +73,7 @@ async function GET(request: Request) {
 
 /**
  * Create a new listing to store in db
- * @param request the request with JSON data in req body
+ * @param request the request with multipart/form-data data in req body
  * @returns JSON response with success message and req body echoed
  */
 async function POST(request: Request) {
@@ -84,11 +85,44 @@ async function POST(request: Request) {
       { status: 500 }
     );
   }
+  const formData = await request.formData();
+  const entries = Array.from(formData.entries());
 
-  // assuming frontend sends req with content-type set to app/json
-  // content type automatically set as app/json
-  const body = await request.json();
-  const parsedBody = listingValidationSchema.safeParse(body);
+  // separate image and hazardTags from other fields
+  const textEntries: [string, FormDataEntryValue][] = [];
+  const hazardTags: string[] = [];
+
+  for (const [key, value] of entries) {
+    if (key === "image") continue;
+    if (key === "hazardTags") {
+      hazardTags.push(value as string);
+    } else {
+      textEntries.push([key, value]);
+    }
+  }
+
+  const result = Object.fromEntries(textEntries) as Partial<ListingInput>;
+  result.hazardTags = hazardTags as typeof result.hazardTags;
+
+  // convert types (since formData changed to string)
+  result.quantityAvailable = Number(result.quantityAvailable);
+  result.price = Number(result.price);
+  if (result.expiryDate) {
+    result.expiryDate = new Date(result.expiryDate as unknown as string);
+  }
+
+  const imageFiles = formData.getAll("images") as File[];
+  if (imageFiles.length > 0) {
+    const imageUrls: string[] = [];
+    for (const imageFile of imageFiles) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const imageUrl = await uploadImage(buffer, imageFile.name);
+      imageUrls.push(imageUrl);
+    }
+    result.imageUrls = imageUrls;
+  }
+
+  const parsedBody = listingValidationSchema.safeParse(result);
 
   if (!parsedBody.success) {
     return NextResponse.json(
