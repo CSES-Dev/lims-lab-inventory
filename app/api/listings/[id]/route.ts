@@ -6,6 +6,8 @@ import {
   getListing,
   updateListing,
 } from "@/services/listings/listings";
+import { ListingInput } from "@/models/Listing";
+import { uploadImage } from "@/lib/googleCloud";
 
 /* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
 const objectIdSchema = z
@@ -92,6 +94,10 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
 
   const parsedId = objectIdSchema.safeParse(params.id);
   if (!parsedId.success) {
+    console.log(
+      "PUT - Validation error:",
+      JSON.stringify(parsedId.error?.issues, null, 2)
+    );
     return NextResponse.json(
       {
         success: false,
@@ -101,7 +107,60 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
     );
   }
 
-  const body = await request.json();
+  const formData = await request.formData();
+  const entries = Array.from(formData.entries());
+
+  // separate image and hazardTags from other fields
+  const textEntries: [string, FormDataEntryValue][] = [];
+  const hazardTags: string[] = [];
+
+  for (const [key, value] of entries) {
+    if (key === "images") continue;
+    if (key === "hazardTags") {
+      hazardTags.push(value as string);
+    } else {
+      textEntries.push([key, value]);
+    }
+  }
+
+  // create plain JS object
+  const result = Object.fromEntries(textEntries) as Partial<ListingInput>;
+  result.hazardTags = hazardTags as typeof result.hazardTags;
+
+  // convert types (since formData changed to string)
+  if (result.quantityAvailable) {
+    result.quantityAvailable = Number(result.quantityAvailable);
+  }
+  if (result.price) {
+    result.price = Number(result.price);
+  }
+  if (result.expiryDate) {
+    result.expiryDate = new Date(result.expiryDate as unknown as string);
+  }
+
+  // handle new image uploads
+  const imageFiles = formData.getAll("images") as File[];
+  const existingImageUrls = formData.get("existingImageUrls");
+
+  let allImageUrls: string[] = [];
+
+  // parse existing image URLs if provided
+  if (existingImageUrls) {
+    try {
+      allImageUrls = JSON.parse(existingImageUrls as string);
+    } catch {
+      // invalid JSON
+      allImageUrls = [];
+    }
+  }
+
+  // upload new images and add to array
+  for (const imageFile of imageFiles) {
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    const imageUrl = await uploadImage(buffer, imageFile.name);
+    allImageUrls.push(imageUrl);
+  }
+  result.imageUrls = allImageUrls;
 
   const validator = z.object({
     id: objectIdSchema,
@@ -110,8 +169,9 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
 
   const parsedRequest = validator.safeParse({
     id: parsedId.data,
-    update: body,
+    update: result,
   });
+
   if (!parsedRequest.success) {
     return NextResponse.json(
       {

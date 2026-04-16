@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import ListingModel, { ListingInput } from "@/models/Listing";
 import { GET, POST } from "@/app/api/listings/route";
 import { GET as GET_BY_ID, PUT, DELETE } from "@/app/api/listings/[id]/route";
 import { connectToDatabase } from "@/lib/mongoose";
@@ -126,15 +127,126 @@ describe("API: Successful Responses", () => {
       expect(res.status).toEqual(200);
       expect(body.success).toEqual(true);
       expect(body.data).toEqual(listingData);
+      expect(getListing).toHaveBeenCalledWith(id);
     });
   });
 
   describe("POST /listings", () => {
-    test("creates a new listing successfully", async () => {});
+    test("creates a new listing successfully", async () => {
+      const date = new Date();
+
+      const listingData = {
+        itemName: "Flask",
+        itemId: "item1",
+        labName: "Dr. Jones Lab",
+        labLocation: "Torrey Pines",
+        labId: "lab1",
+        quantityAvailable: 5,
+        description: "High quality flask for use",
+        price: 50,
+        status: "ACTIVE",
+        condition: "New",
+        hazardTags: ["Physical"],
+      };
+
+      const mockReturnedData = {
+        ...listingData,
+        id: "123",
+        createdAt: date,
+        imageUrls: [],
+      };
+
+      const formData = new FormData();
+      Object.entries(listingData).forEach(([key, value]) => {
+        if (value === null || value === undefined) return;
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (addListing as jest.Mock).mockResolvedValue(mockReturnedData);
+
+      const req = new Request(`http://localhost/api/listings`, {
+        method: "POST",
+        body: formData,
+      });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toEqual(201);
+      expect(body.success).toEqual(true);
+      expect(body.data).toMatchObject({
+        ...listingData,
+        id: "123",
+        createdAt: expect.any(String),
+        imageUrls: [],
+      });
+      expect(addListing).toHaveBeenCalled();
+    });
   });
 
   describe("PUT /listings/[id]", () => {
-    test("updates a listing successfully", async () => {});
+    test("updates a listing successfully", async () => {
+      const date = new Date();
+      const id = new mongoose.Types.ObjectId().toString();
+
+      const listingData = {
+        itemName: "Flask",
+        itemId: "item1",
+        labName: "Dr. Jones Lab",
+        labLocation: "Torrey Pines",
+        labId: "lab1",
+        quantityAvailable: 5,
+        description: "High quality flask for use",
+        price: 50,
+        status: "ACTIVE",
+        condition: "New",
+        hazardTags: ["Physical"],
+      };
+
+      const mockReturnedData = {
+        ...listingData,
+        id: id,
+        createdAt: date,
+        imageUrls: [],
+      };
+
+      const formData = new FormData();
+      Object.entries(listingData).forEach(([key, value]) => {
+        if (value === null || value === undefined) return;
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (updateListing as jest.Mock).mockResolvedValue(mockReturnedData);
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const res = await PUT(req, { params: { id: id } });
+      const body = await res.json();
+
+      expect(res.status).toEqual(200);
+      expect(body.success).toEqual(true);
+      expect(body.data).toMatchObject({
+        ...listingData,
+        id: id,
+        createdAt: expect.any(String),
+        imageUrls: [],
+      });
+      expect(updateListing).toHaveBeenCalledWith(
+        id,
+        expect.objectContaining(listingData)
+      );
+    });
   });
 
   describe("DELETE /listings/[id]", () => {

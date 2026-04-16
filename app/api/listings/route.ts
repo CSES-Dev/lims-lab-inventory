@@ -101,6 +101,7 @@ async function POST(request: Request) {
     }
   }
 
+  // create plain JS object
   const result = Object.fromEntries(textEntries) as Partial<ListingInput>;
   result.hazardTags = hazardTags as typeof result.hazardTags;
 
