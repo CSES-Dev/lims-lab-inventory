@@ -17,6 +17,10 @@ jest.mock("@/services/listings/listings", () => ({
   deleteListing: jest.fn(),
 }));
 
+jest.mock("@/lib/googleCloud", () => ({
+  uploadImage: jest.fn().mockResolvedValue("https://mock.com/image.jpg"),
+}));
+
 /** import after mocking */
 import {
   getListings,
@@ -42,12 +46,21 @@ describe("API: Successful Responses", () => {
       const id = "123";
 
       const listingData = {
-        id: id, // just keep as string now since res.json() stringifies
+        id: id,
+        itemName: "Flask",
         itemId: "item1",
+        labName: "Dr. Jones Lab",
+        labLocation: "Torrey Pines",
         labId: "lab1",
+        imageUrls: [],
         quantityAvailable: 5,
-        status: "ACTIVE",
         createdAt: date,
+        expiryDate: null,
+        description: "High quality flask for use",
+        price: 50,
+        status: "ACTIVE",
+        condition: "New",
+        hazardTags: ["Physical"],
       };
 
       (connectToDatabase as jest.Mock).mockResolvedValue({});
@@ -87,11 +100,20 @@ describe("API: Successful Responses", () => {
 
       const listingData = {
         id: id,
+        itemName: "Flask",
         itemId: "item1",
+        labName: "Dr. Jones Lab",
+        labLocation: "Torrey Pines",
         labId: "lab1",
+        imageUrls: [],
         quantityAvailable: 5,
-        status: "ACTIVE",
         createdAt: date,
+        expiryDate: null,
+        description: "High quality flask for use",
+        price: 50,
+        status: "ACTIVE",
+        condition: "New",
+        hazardTags: ["Physical"],
       };
 
       (connectToDatabase as jest.Mock).mockResolvedValue({});

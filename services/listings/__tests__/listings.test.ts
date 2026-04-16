@@ -27,11 +27,20 @@ describe("Services: Successful Return Tests", () => {
 
     const listingData = {
       id: id,
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
     const listingDoc = {
       toObject: jest.fn().mockReturnValue(listingData),
@@ -56,11 +65,20 @@ describe("Services: Successful Return Tests", () => {
 
     const listingData = {
       id: id,
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
     const listingDoc = {
       toObject: jest.fn().mockReturnValue(listingData),
@@ -95,11 +113,20 @@ describe("Services: Successful Return Tests", () => {
 
     const listingData = {
       id: id,
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
     const listingDoc = {
       toObject: jest.fn().mockReturnValue(listingData),
@@ -121,11 +148,20 @@ describe("Services: Successful Return Tests", () => {
     const id = "123";
 
     const listingData: ListingInput = {
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
 
     const listingDoc = {
@@ -150,11 +186,20 @@ describe("Services: Successful Return Tests", () => {
     const id = "123";
 
     const listingData: ListingInput = {
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
 
     const listingDoc = {
@@ -223,11 +268,20 @@ describe("Services: Null Return Tests", () => {
     const id = "123";
 
     const listingData: ListingInput = {
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
 
     const listingDoc = null;
@@ -292,11 +346,20 @@ describe("Services: Error Return Tests", () => {
   test("db error in addListing", async () => {
     const date = new Date();
     const listingData: ListingInput = {
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
 
     (ListingModel.create as jest.Mock).mockRejectedValue(new Error("DB Error"));
@@ -309,11 +372,20 @@ describe("Services: Error Return Tests", () => {
     const date = new Date();
     const id = "123";
     const listingData: ListingInput = {
+      itemName: "Flask",
       itemId: "item1",
+      labName: "Dr. Jones Lab",
+      labLocation: "Torrey Pines",
       labId: "lab1",
+      imageUrls: [],
       quantityAvailable: 5,
-      status: "ACTIVE",
       createdAt: date,
+      expiryDate: null,
+      description: "High quality flask for use",
+      price: 50,
+      status: "ACTIVE",
+      condition: "New",
+      hazardTags: ["Physical"],
     };
     (ListingModel.findByIdAndUpdate as jest.Mock).mockReturnValue({
       exec: jest.fn().mockRejectedValue(new Error("DB Error")),
