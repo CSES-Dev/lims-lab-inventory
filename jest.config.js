@@ -1,12 +1,9 @@
-import type { Config } from 'jest';
-import path from 'path';
-
-const config: Config = {
+/** @type {import('jest').Config} */
+const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>'],
 
-  // Test file patterns
   testMatch: [
     '**/__tests__/**/*.test.ts',
     '**/__tests__/**/*.spec.ts',
@@ -14,15 +11,12 @@ const config: Config = {
     '**/.spec.ts',
   ],
 
-  // Module path mapping (for @/ imports)
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
 
-  // Setup files
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
-  // Coverage settings
   collectCoverageFrom: [
     'app/*/.ts',
     'app/*/.tsx',
@@ -41,7 +35,6 @@ const config: Config = {
     '/coverage/',
   ],
 
-  // Transform files
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
@@ -54,14 +47,9 @@ const config: Config = {
     ],
   },
 
-  // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-
-  // Test timeout (important for DB tests)
   testTimeout: 10000,
-
-  // Verbose output
   verbose: true,
 };
 
-export default config;
+module.exports = config;
