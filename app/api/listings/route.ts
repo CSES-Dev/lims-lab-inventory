@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
-import { number, z } from "zod";
+import { z } from "zod";
 import { getFilteredListings, addListing } from "@/services/listings/listings";
 import { ListingInput } from "@/models/Listing";
 import { uploadImage } from "@/lib/googleCloud";
@@ -107,7 +107,9 @@ async function POST(request: Request) {
 
   // convert types (since formData changed to string)
   result.quantityAvailable = Number(result.quantityAvailable);
-  result.price = Number(result.price);
+  if (result.price) {
+    result.price = Number(result.price);
+  }
   if (result.expiryDate) {
     result.expiryDate = new Date(result.expiryDate as unknown as string);
   }

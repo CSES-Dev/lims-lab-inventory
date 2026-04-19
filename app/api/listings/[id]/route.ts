@@ -9,29 +9,29 @@ import {
 import { ListingInput } from "@/models/Listing";
 import { uploadImage } from "@/lib/googleCloud";
 
-/* IMPORTANT: implement user auth in future (e.g. only lab admins create/delete) */
 const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId");
-const listingValidationSchema = z.object({
-  // handle defaults here for the optional fields
-  itemName: z.string(),
-  itemId: z.string(),
-  labName: z.string().optional().default(""),
-  labLocation: z.string().optional().default(""),
-  labId: z.string(),
-  imageUrls: z.array(z.string()).optional().default([]),
-  quantityAvailable: z.number(),
-  expiryDate: z.date().optional(),
-  description: z.string().optional().default(""),
-  price: z.number().optional().default(0),
-  status: z.enum(["ACTIVE", "INACTIVE"]),
-  condition: z.enum(["New", "Good", "Fair", "Poor"]),
-  hazardTags: z
-    .array(z.enum(["Physical", "Chemical", "Biological", "Other"]))
-    .optional()
-    .default([]),
-});
+const listingValidationSchema = z
+  .object({
+    itemName: z.string(),
+    itemId: z.string(),
+    labName: z.string(),
+    labLocation: z.string(),
+    labId: z.string(),
+    imageUrls: z.array(z.string()),
+    quantityAvailable: z.number(),
+    expiryDate: z.date(),
+    description: z.string(),
+    price: z.number(),
+    status: z.enum(["ACTIVE", "INACTIVE"]),
+    condition: z.enum(["New", "Good", "Fair", "Poor"]),
+    hazardTags: z.array(
+      z.enum(["Physical", "Chemical", "Biological", "Other"])
+    ),
+  })
+  .partial()
+  .strict();
 
 /**
  * Get a listing entry by ID
@@ -94,10 +94,6 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
 
   const parsedId = objectIdSchema.safeParse(params.id);
   if (!parsedId.success) {
-    console.log(
-      "PUT - Validation error:",
-      JSON.stringify(parsedId.error?.issues, null, 2)
-    );
     return NextResponse.json(
       {
         success: false,
@@ -108,70 +104,46 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
   }
 
   const formData = await request.formData();
-  const entries = Array.from(formData.entries());
+  const updateData: Partial<ListingInput> = {
+    ...Object.fromEntries(formData.entries()),
+  };
 
-  // separate image and hazardTags from other fields
-  const textEntries: [string, FormDataEntryValue][] = [];
-  const hazardTags: string[] = [];
-
-  for (const [key, value] of entries) {
-    if (key === "images") continue;
-    if (key === "hazardTags") {
-      hazardTags.push(value as string);
-    } else {
-      textEntries.push([key, value]);
-    }
+  // handle array fields
+  const hazardTags = formData.getAll("hazardTags");
+  if (hazardTags.length > 0) {
+    updateData.hazardTags = hazardTags as ListingInput["hazardTags"];
   }
 
-  // create plain JS object
-  const result = Object.fromEntries(textEntries) as Partial<ListingInput>;
-  result.hazardTags = hazardTags as typeof result.hazardTags;
-
-  // convert types (since formData changed to string)
-  if (result.quantityAvailable) {
-    result.quantityAvailable = Number(result.quantityAvailable);
-  }
-  if (result.price) {
-    result.price = Number(result.price);
-  }
-  if (result.expiryDate) {
-    result.expiryDate = new Date(result.expiryDate as unknown as string);
+  // type conversions
+  if (updateData.quantityAvailable !== undefined) {
+    updateData.quantityAvailable = Number(updateData.quantityAvailable);
   }
 
-  // handle new image uploads
+  if (updateData.price !== undefined) {
+    updateData.price = Number(updateData.price);
+  }
+
+  if (updateData.expiryDate !== undefined) {
+    updateData.expiryDate = new Date(
+      updateData.expiryDate as unknown as string
+    );
+  }
+
+  // handle image uploads if provided
   const imageFiles = formData.getAll("images") as File[];
-  const existingImageUrls = formData.get("existingImageUrls");
+  if (imageFiles.length > 0) {
+    const imageUrls: string[] = [];
 
-  let allImageUrls: string[] = [];
-
-  // parse existing image URLs if provided
-  if (existingImageUrls) {
-    try {
-      allImageUrls = JSON.parse(existingImageUrls as string);
-    } catch {
-      // invalid JSON
-      allImageUrls = [];
+    for (const imageFile of imageFiles) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const imageUrl = await uploadImage(buffer, imageFile.name);
+      imageUrls.push(imageUrl);
     }
+
+    updateData.imageUrls = imageUrls;
   }
 
-  // upload new images and add to array
-  for (const imageFile of imageFiles) {
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
-    const imageUrl = await uploadImage(buffer, imageFile.name);
-    allImageUrls.push(imageUrl);
-  }
-  result.imageUrls = allImageUrls;
-
-  const validator = z.object({
-    id: objectIdSchema,
-    update: listingValidationSchema.partial(),
-  });
-
-  const parsedRequest = validator.safeParse({
-    id: parsedId.data,
-    update: result,
-  });
-
+  const parsedRequest = listingValidationSchema.safeParse(updateData);
   if (!parsedRequest.success) {
     return NextResponse.json(
       {
@@ -185,8 +157,9 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const updatedListing = await updateListing(
       parsedId.data,
-      parsedRequest.data.update
+      parsedRequest.data
     );
+
     if (!updatedListing) {
       return NextResponse.json(
         {
@@ -196,6 +169,7 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
         { status: 404 }
       );
     }
+
     return NextResponse.json(
       {
         success: true,
@@ -234,7 +208,6 @@ async function DELETE(
   }
 
   const parsedId = objectIdSchema.safeParse(params.id);
-  console.log("DELETE - Parsed ID:", parsedId);
   if (!parsedId.success) {
     return NextResponse.json(
       {

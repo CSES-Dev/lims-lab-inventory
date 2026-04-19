@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import ListingModel, { ListingInput } from "@/models/Listing";
 import { GET, POST } from "@/app/api/listings/route";
 import { GET as GET_BY_ID, PUT, DELETE } from "@/app/api/listings/[id]/route";
 import { connectToDatabase } from "@/lib/mongoose";
@@ -24,7 +23,6 @@ jest.mock("@/lib/googleCloud", () => ({
 
 /** import after mocking */
 import {
-  getListings,
   getFilteredListings,
   getListing,
   addListing,
@@ -132,7 +130,7 @@ describe("API: Successful Responses", () => {
   });
 
   describe("POST /listings", () => {
-    test("creates a new listing successfully", async () => {
+    test("creates a new listing with all fields", async () => {
       const date = new Date();
 
       const listingData = {
@@ -146,11 +144,13 @@ describe("API: Successful Responses", () => {
         price: 50,
         status: "ACTIVE",
         condition: "New",
-        hazardTags: ["Physical"],
+        hazardTags: ["Physical", "Chemical"],
+        expiryDate: date.toISOString(),
       };
 
       const mockReturnedData = {
         ...listingData,
+        expiryDate: new Date(listingData.expiryDate),
         id: "123",
         createdAt: date,
         imageUrls: [],
@@ -158,7 +158,6 @@ describe("API: Successful Responses", () => {
 
       const formData = new FormData();
       Object.entries(listingData).forEach(([key, value]) => {
-        if (value === null || value === undefined) return;
         if (Array.isArray(value)) {
           value.forEach((item) => formData.append(key, item));
         } else {
@@ -173,27 +172,14 @@ describe("API: Successful Responses", () => {
         method: "POST",
         body: formData,
       });
+
       const res = await POST(req);
       const body = await res.json();
 
-      expect(res.status).toEqual(201);
-      expect(body.success).toEqual(true);
+      expect(res.status).toBe(201);
+      expect(body.success).toBe(true);
+
       expect(body.data).toMatchObject({
-        ...listingData,
-        id: "123",
-        createdAt: expect.any(String),
-        imageUrls: [],
-      });
-      expect(addListing).toHaveBeenCalled();
-    });
-  });
-
-  describe("PUT /listings/[id]", () => {
-    test("updates a listing successfully", async () => {
-      const date = new Date();
-      const id = new mongoose.Types.ObjectId().toString();
-
-      const listingData = {
         itemName: "Flask",
         itemId: "item1",
         labName: "Dr. Jones Lab",
@@ -204,14 +190,107 @@ describe("API: Successful Responses", () => {
         price: 50,
         status: "ACTIVE",
         condition: "New",
-        hazardTags: ["Physical"],
+        hazardTags: ["Physical", "Chemical"],
+        expiryDate: expect.any(String),
+        id: "123",
+        createdAt: expect.any(String),
+        imageUrls: [],
+      });
+
+      expect(addListing).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...listingData,
+          quantityAvailable: 5,
+          price: 50,
+          expiryDate: new Date(listingData.expiryDate),
+          hazardTags: ["Physical", "Chemical"],
+        })
+      );
+    });
+
+    test("creates listing with defaults for optional fields", async () => {
+      const date = new Date();
+
+      const minimalData = {
+        itemName: "Flask",
+        itemId: "item1",
+        labId: "lab1",
+        quantityAvailable: 5,
+        status: "ACTIVE",
+        condition: "New",
+      };
+
+      const mockReturnedData = {
+        ...minimalData,
+        id: "123",
+        createdAt: date,
+        imageUrls: [],
+        labName: "",
+        labLocation: "",
+        description: "",
+        price: 0,
+        hazardTags: [],
+      };
+
+      const formData = new FormData();
+      Object.entries(minimalData).forEach(([key, value]) => {
+        formData.append(key, String(value));
+      });
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (addListing as jest.Mock).mockResolvedValue(mockReturnedData);
+
+      const req = new Request(`http://localhost/api/listings`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.success).toBe(true);
+
+      expect(body.data).toMatchObject({
+        ...minimalData,
+        labName: "",
+        labLocation: "",
+        description: "",
+        price: 0,
+        hazardTags: [],
+        imageUrls: [],
+      });
+    });
+  });
+
+  describe("PUT /listings/[id]", () => {
+    test("successfully updates a listing with all fields", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      const date = new Date();
+
+      const listingData = {
+        itemName: "Updated Flask",
+        itemId: "item1",
+        labName: "Updated Lab",
+        labLocation: "Updated Location",
+        labId: "lab1",
+        quantityAvailable: 10,
+        description: "Updated description",
+        price: 100,
+        status: "ACTIVE",
+        condition: "Good",
+        hazardTags: ["Chemical", "Biological"],
+        expiryDate: date.toISOString(),
       };
 
       const mockReturnedData = {
         ...listingData,
-        id: id,
+        id,
         createdAt: date,
-        imageUrls: [],
+        imageUrls: [
+          "http://example.com/image1.jpg",
+          "http://example.com/image2.jpg",
+        ],
       };
 
       const formData = new FormData();
@@ -231,21 +310,26 @@ describe("API: Successful Responses", () => {
         method: "PUT",
         body: formData,
       });
-      const res = await PUT(req, { params: { id: id } });
+
+      const res = await PUT(req, { params: { id } });
       const body = await res.json();
 
-      expect(res.status).toEqual(200);
-      expect(body.success).toEqual(true);
-      expect(body.data).toMatchObject({
+      expect(res.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(body.message).toBe("Listing successfully updated.");
+      expect(body.data).toEqual({
         ...listingData,
-        id: id,
-        createdAt: expect.any(String),
-        imageUrls: [],
-      });
-      expect(updateListing).toHaveBeenCalledWith(
         id,
-        expect.objectContaining(listingData)
-      );
+        createdAt: expect.any(String),
+        imageUrls: [
+          "http://example.com/image1.jpg",
+          "http://example.com/image2.jpg",
+        ],
+      });
+      expect(updateListing).toHaveBeenCalledWith(id, {
+        ...listingData,
+        expiryDate: new Date(listingData.expiryDate),
+      });
     });
   });
 
@@ -378,18 +462,214 @@ describe("API: Error Responses", () => {
   });
 
   describe("POST /listings", () => {
-    test("DB connection error", async () => {});
-    test("invalid req body", async () => {});
-    test("listing already exists", async () => {});
-    test("service error creating listing", async () => {});
+    test("DB connection error", async () => {
+      (connectToDatabase as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const formData = new FormData();
+
+      const req = new Request("http://localhost/api/listings", {
+        method: "POST",
+        body: formData,
+      });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error connecting to database.");
+    });
+
+    test("invalid req body", async () => {
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+
+      const formData = new FormData();
+      formData.append("invalidField", "Invalid Value");
+
+      const req = new Request("http://localhost/api/listings", {
+        method: "POST",
+        body: formData,
+      });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Invalid request body.");
+    });
+
+    test("listing already exists", async () => {
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      // mock mongodb's error, not the http 409 status code
+      (addListing as jest.Mock).mockRejectedValue({ code: 11000 });
+
+      const formData = new FormData();
+      formData.append("itemName", "Flask");
+      formData.append("itemId", "item1");
+      formData.append("labId", "lab1");
+      formData.append("quantityAvailable", "5");
+      formData.append("status", "ACTIVE");
+      formData.append("condition", "New");
+
+      const req = new Request("http://localhost/api/listings", {
+        method: "POST",
+        body: formData,
+      });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(409);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("This listing already exists.");
+      expect(addListing).toHaveBeenCalled();
+    });
+
+    test("service error creating listing", async () => {
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (addListing as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const formData = new FormData();
+      formData.append("itemName", "Flask");
+      formData.append("itemId", "item1");
+      formData.append("labId", "lab1");
+      formData.append("quantityAvailable", "5");
+      formData.append("status", "ACTIVE");
+      formData.append("condition", "New");
+
+      const req = new Request("http://localhost/api/listings", {
+        method: "POST",
+        body: formData,
+      });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error occurred while creating new listing.");
+      expect(addListing).toHaveBeenCalled();
+    });
   });
 
   describe("PUT /listings/[id]", () => {
-    test("DB connection error", async () => {});
-    test("invalid id format", async () => {});
-    test("invalid req body", async () => {});
-    test("listing not found", async () => {});
-    test("service error updating listing", async () => {});
+    test("DB connection error", async () => {
+      const id = "123";
+      const formData = new FormData();
+      formData.append("itemName", "Updated Name");
+
+      (connectToDatabase as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const res = await PUT(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error connecting to database.");
+    });
+
+    test("invalid id format", async () => {
+      const id = "invalid-id";
+      const formData = new FormData();
+      formData.append("itemName", "Updated Name");
+      formData.append("quantityAvailable", "10");
+      formData.append("status", "ACTIVE");
+      formData.append("condition", "New");
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const res = await PUT(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe(
+        "Invalid ID format. Must be a valid MongoDB ObjectId."
+      );
+    });
+
+    test("invalid req body", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      const formData = new FormData();
+      formData.append("invalidField", "Testing Invalid Value");
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      const res = await PUT(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Invalid request body.");
+    });
+
+    test("listing not found", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      const formData = new FormData();
+      formData.append("itemName", "Updated Name");
+      formData.append("quantityAvailable", "10");
+      formData.append("status", "ACTIVE");
+      formData.append("condition", "New");
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (updateListing as jest.Mock).mockResolvedValue(null);
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const res = await PUT(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(404);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Listing not found");
+      expect(updateListing).toHaveBeenCalledWith(id, {
+        itemName: "Updated Name",
+        quantityAvailable: 10,
+        status: "ACTIVE",
+        condition: "New",
+      });
+    });
+
+    test("service error updating listing", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      const formData = new FormData();
+      formData.append("itemName", "Updated Name");
+      formData.append("quantityAvailable", "10");
+      formData.append("status", "ACTIVE");
+      formData.append("condition", "New");
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (updateListing as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const res = await PUT(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error occurred while updating listing.");
+      expect(updateListing).toHaveBeenCalledWith(id, {
+        itemName: "Updated Name",
+        quantityAvailable: 10,
+        status: "ACTIVE",
+        condition: "New",
+      });
+    });
   });
 
   describe("DELETE /listings/[id]", () => {
