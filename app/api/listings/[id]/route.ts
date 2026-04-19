@@ -234,6 +234,7 @@ async function DELETE(
   }
 
   const parsedId = objectIdSchema.safeParse(params.id);
+  console.log("DELETE - Parsed ID:", parsedId);
   if (!parsedId.success) {
     return NextResponse.json(
       {
@@ -260,7 +261,7 @@ async function DELETE(
         success: true,
         message: "Listing successfully deleted.",
       },
-      { status: 204 }
+      { status: 200 }
     );
   } catch {
     return NextResponse.json(

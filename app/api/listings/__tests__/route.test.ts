@@ -250,7 +250,23 @@ describe("API: Successful Responses", () => {
   });
 
   describe("DELETE /listings/[id]", () => {
-    test("deletes a listing successfully", async () => {});
+    test("deletes a listing successfully", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (deleteListing as jest.Mock).mockResolvedValue(true);
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const res = await DELETE(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(body.message).toBe("Listing successfully deleted.");
+      expect(deleteListing).toHaveBeenCalledWith(id);
+    });
   });
 });
 
@@ -377,9 +393,74 @@ describe("API: Error Responses", () => {
   });
 
   describe("DELETE /listings/[id]", () => {
-    test("DB connection error", async () => {});
-    test("invalid id format", async () => {});
-    test("listing not found", async () => {});
-    test("service error deleting listing", async () => {});
+    test("DB connection error", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+
+      (connectToDatabase as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const res = await DELETE(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error connecting to database.");
+    });
+
+    test("invalid id format", async () => {
+      const id = "invalid-id";
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const res = await DELETE(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe(
+        "Invalid ID format. Must be a valid MongoDB ObjectId."
+      );
+    });
+
+    test("listing not found", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (deleteListing as jest.Mock).mockResolvedValue(false);
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const res = await DELETE(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(404);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Listing not found");
+      expect(deleteListing).toHaveBeenCalledWith(id);
+    });
+
+    test("service error deleting listing", async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+
+      (connectToDatabase as jest.Mock).mockResolvedValue({});
+      (deleteListing as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      const req = new Request(`http://localhost/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const res = await DELETE(req, { params: { id } });
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Error occurred while deleting listing.");
+      expect(deleteListing).toHaveBeenCalledWith(id);
+    });
   });
 });
