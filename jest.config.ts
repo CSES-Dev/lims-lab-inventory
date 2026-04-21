@@ -48,16 +48,49 @@ const config: Config = {
         },
       },
     ],
-  },
 
   // Module file extensions
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
-  // Test timeout (important for DB tests)
-  testTimeout: 10000,
+    // Setup files
+    setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
 
-  // Verbose output
-  verbose: true,
+    // Coverage settings
+    collectCoverageFrom: [
+        "app/*/.ts",
+        "app/*/.tsx",
+        "services/*/.ts",
+        "models/*/.ts",
+        "lib/*/.ts",
+        "!*/.d.ts",
+        "!*/node_modules/*",
+        "!*/.next/*",
+        "!*/coverage/*",
+    ],
+
+    coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/coverage/"],
+
+    // Transform files
+    transform: {
+        "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+                tsconfig: {
+                    jsx: "react",
+                    esModuleInterop: true,
+                },
+            },
+        ],
+    },
+
+    // Module file extensions
+    moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+
+    // Test timeout (important for DB tests)
+    testTimeout: 10000,
+
+    // Verbose output
+    verbose: true,
 };
 
 export default config;
