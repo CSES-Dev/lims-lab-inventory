@@ -92,7 +92,7 @@ async function POST(request: Request) {
   let { allowed, reason } = await getSession("inventory:create");
   if (!allowed) {
     return NextResponse.json(
-      { success: false, message: reason || "Unauthorized" },
+      { success: false, message: reason },
       { status: 403 }
     );
   }
@@ -100,7 +100,7 @@ async function POST(request: Request) {
   ({ allowed, reason } = await getSession("listing:create"));
   if (!allowed) {
     return NextResponse.json(
-      { success: false, message: reason || "Unauthorized" },
+      { success: false, message: reason },
       { status: 403 }
     );
   }
