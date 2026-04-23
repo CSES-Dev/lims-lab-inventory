@@ -1,14 +1,5 @@
 import mongoose from "mongoose";
 
-// const MONGODB_URI = process.env.DATABASE_URL!; // assert that db_url is not null
-
-// if (!MONGODB_URI) {
-//   throw new Error(
-//     "Please define the DATABASE_URL environment variable inside .env"
-//   );
-// }
-// move inside the connectDB function so the test script can access
-
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -29,19 +20,20 @@ const cached: MongooseCache = globalForMongoose.mongoose ?? {
 globalForMongoose.mongoose = cached;
 
 export async function connectToDatabase() {
-  const MONGODB_URI = process.env.DATABASE_URL!; // assert that db_url is not null
+  const mongoDbUri = process.env.DATABASE_URL;
 
-  if (!MONGODB_URI) {
+  if (!mongoDbUri) {
     throw new Error(
       "Please define the DATABASE_URL environment variable inside .env"
     );
   }
+
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    cached.promise = mongoose.connect(mongoDbUri, {
       bufferCommands: false,
     });
   }
