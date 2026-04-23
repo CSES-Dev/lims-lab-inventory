@@ -2,6 +2,7 @@ import type { Config } from "jest";
 import path from "path";
 
 const config: Config = {
+<<<<<<< HEAD
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>"],
@@ -47,10 +48,29 @@ const config: Config = {
           esModuleInterop: true,
         },
       },
+=======
+    preset: "ts-jest",
+    testEnvironment: "node",
+    roots: ["<rootDir>"],
+
+    // Test file patterns
+    testMatch: [
+        "**/__tests__/**/*.test.ts",
+        "**/__tests__/**/*.spec.ts",
+        "**/.test.ts",
+        "**/.spec.ts",
+>>>>>>> 1da47d6 (Updated configs and setups to match main)
     ],
 
+<<<<<<< HEAD
   // Module file extensions
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+=======
+    // Module path mapping (for @/ imports)
+    moduleNameMapper: {
+        "^@/(.*)$": "<rootDir>/$1",
+    },
+>>>>>>> 1da47d6 (Updated configs and setups to match main)
 
     // Setup files
     setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
