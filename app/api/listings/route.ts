@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getFilteredListings, addListing } from "@/services/listings/listings";
 import { ListingInput } from "@/models/Listing";
 import { uploadImage } from "@/lib/googleCloud";
+import { getSession } from "@/lib/rbac";
 
 const listingValidationSchema = z.object({
   // handle defaults here for the optional fields
@@ -32,6 +33,17 @@ const listingValidationSchema = z.object({
  * @returns JSON response with the filtered listings as JS objects
  */
 async function GET(request: Request) {
+  const { allowed, reason } = await getSession("inventory:view");
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: reason,
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
   } catch {
@@ -77,6 +89,22 @@ async function GET(request: Request) {
  * @returns JSON response with success message and req body echoed
  */
 async function POST(request: Request) {
+  let { allowed, reason } = await getSession("inventory:create");
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, message: reason || "Unauthorized" },
+      { status: 403 }
+    );
+  }
+
+  ({ allowed, reason } = await getSession("listing:create"));
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, message: reason || "Unauthorized" },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
   } catch {

@@ -8,6 +8,7 @@ import {
 } from "@/services/listings/listings";
 import { ListingInput } from "@/models/Listing";
 import { uploadImage } from "@/lib/googleCloud";
+import { getSession } from "@/lib/rbac";
 
 const objectIdSchema = z
   .string()
@@ -40,6 +41,17 @@ const listingValidationSchema = z
  * @returns the listing as a JS object in a JSON response
  */
 async function GET(request: Request, { params }: { params: { id: string } }) {
+  const { allowed, reason } = await getSession("inventory:view");
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: reason,
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
   } catch {
@@ -83,6 +95,17 @@ async function GET(request: Request, { params }: { params: { id: string } }) {
  * @returns the updated listing as a JS object in a JSON response
  */
 async function PUT(request: Request, { params }: { params: { id: string } }) {
+  const { allowed, reason } = await getSession("inventory:update");
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: reason,
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
   } catch {
@@ -198,6 +221,17 @@ async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const { allowed, reason } = await getSession("inventory:delete");
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: reason,
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
   } catch {
