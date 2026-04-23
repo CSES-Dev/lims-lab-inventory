@@ -13,12 +13,14 @@ const ROLE_PERMISSIONS: Record<Role, string[]> = {
         "transfer:approve",
         "payment:approve",
         "lab:manage_users",
+        "inventory:view"
     ],
     LAB_MANAGER: [
         "inventory:create",
         "inventory:update",
         "inventory:set_threshold",
-        "transfer:request"
+        "transfer:request",
+        "inventory:view"
     ],
     RESEARCHER: [
         "inventory:view",
