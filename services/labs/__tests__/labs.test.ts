@@ -1,9 +1,14 @@
 import { connectToDatabase } from "@/lib/mongoose";
+import { getSession } from "@/lib/rbac";
 import Lab from "@/models/Lab";
 import { getLab, getLabs, addLab, updateLab, deleteLab } from "../labs";
 
 jest.mock("@/lib/mongoose", () => ({
     connectToDatabase: jest.fn(),
+}));
+
+jest.mock("@/lib/rbac", () => ({
+    getSession: jest.fn(),
 }));
 
 jest.mock("@/models/Lab", () => ({
@@ -21,11 +26,17 @@ jest.mock("@/models/Lab", () => ({
 }));
 
 const mockedConnectToDatabase = jest.mocked(connectToDatabase);
+const mockedGetSession = jest.mocked(getSession);
 const mockedLabModel = jest.mocked(Lab);
 
 describe("Lab Service", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockedGetSession.mockResolvedValue({
+            allowed: true,
+            user: null,
+            reason: "",
+        });
     });
     describe("getLabs", () => {
         it("should return a paginated list of labs", async () => {

@@ -1,6 +1,7 @@
 import type { HydratedDocument }from "mongoose";
 
 import { connectToDatabase } from "@/lib/mongoose";
+import { getSession } from "@/lib/rbac";
 import LabModel, { Lab, LabInput, toLab, toLabFromLean } from "@/models/Lab";
 
 export type GetLabOptions = { page?: number; limit?: number };
@@ -11,6 +12,11 @@ export type LabPayload = Pick<Lab, "name" | "department" | "createdAt">;
  * @returns an array of labs
  */
 export async function getLabs(options?: GetLabOptions) {
+    const { allowed, user, reason } = await getSession("inventory:view");
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+
     await connectToDatabase();
     const page = Math.max(options?.page ?? 1, 1);
     const limit = Math.max(options?.limit ?? 10, 1);
@@ -31,6 +37,11 @@ export async function getLabs(options?: GetLabOptions) {
  * @returns the lab
  */
 export async function getLab(id: string): Promise<Lab | null> {
+    const { allowed, user, reason } = await getSession("inventory:view");
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+
     await connectToDatabase();
     const lab = await LabModel.findById(id).lean().exec();
     return lab ? toLabFromLean(lab) : null;
@@ -42,6 +53,11 @@ export async function getLab(id: string): Promise<Lab | null> {
  * @returns the created lab
  */
 export async function addLab(newLab: LabInput | Omit<Lab, 'id'>): Promise<Lab> {
+    const { allowed, user, reason } = await getSession("inventory:create");
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+
     await connectToDatabase();
     const createdLab = await LabModel.create(newLab);
     return toLab(createdLab);
@@ -57,6 +73,11 @@ export async function updateLab(
     id: string,
     data: Partial<Lab>,
 ): Promise<Lab | null> {
+    const { allowed, user, reason } = await getSession("inventory:update");
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+
     await connectToDatabase();
     const updatedLab = await LabModel.findByIdAndUpdate(id, data, {
         new: true,
@@ -73,6 +94,11 @@ export async function updateLab(
 // DON'T use this for tables that you don't actually need to potentially delete things from
 // Could be used accidentally or misused maliciously to get rid of important data
 export async function deleteLab(id: string): Promise<boolean> {
+    const { allowed, user, reason } = await getSession("inventory:delete");
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
+
     await connectToDatabase();
     const lab = await LabModel.findById(id).exec();
     if (!lab) {
