@@ -8,6 +8,7 @@
         "start": "next start",
         "lint": "next lint",
         "test:e2e": "playwright test",
+        "test:unit": "jest",
         "check-git-hooks": "node .secret-scan/secret-scan.js -- --check-git-hooks",
         "format": "prettier --write .",
         "lint-fix": "(eslint --fix --cache --report-unused-disable-directives . || true) && prettier --write .",
@@ -57,6 +58,7 @@
         "tailwindcss": "^3.4.1",
         "tailwindcss-animate": "^1.0.7",
         "ts-jest": "^29.4.6",
-        "typescript": "^5"
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3"
     }
 }
