@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import { GET, POST } from "@/app/api/listings/route";
-import { GET as GET_BY_ID, PUT, DELETE } from "@/app/api/listings/[id]/route";
 import { connectToDatabase } from "@/lib/mongoose";
 
 /** test route handler, mock db connection and svc handlers */
@@ -21,7 +19,17 @@ jest.mock("@/lib/googleCloud", () => ({
   uploadImage: jest.fn().mockResolvedValue("https://mock.com/image.jpg"),
 }));
 
+jest.mock("@/lib/rbac", () => ({
+  getSession: jest.fn().mockResolvedValue({
+    allowed: true,
+    user: null,
+    reason: undefined,
+  }),
+}));
+
 /** import after mocking */
+import { GET, POST } from "@/app/api/listings/route";
+import { GET as GET_BY_ID, PUT, DELETE } from "@/app/api/listings/[id]/route";
 import {
   getFilteredListings,
   getListing,
