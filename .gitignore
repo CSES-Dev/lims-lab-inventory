@@ -1,6 +1,8 @@
 node_modules/
-.next/
+dist/
 .env.local
 .DS_Store
 .env
 coverage/
+.next/
+playwright-report/
