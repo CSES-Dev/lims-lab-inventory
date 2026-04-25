@@ -154,17 +154,6 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
 
   // handle image uploads if provided
   const imageFiles = formData.getAll("images") as File[];
-  if (imageFiles.length > 0) {
-    const imageUrls: string[] = [];
-
-    for (const imageFile of imageFiles) {
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const imageUrl = await uploadImage(buffer, imageFile.name);
-      imageUrls.push(imageUrl);
-    }
-
-    updateData.imageUrls = imageUrls;
-  }
 
   const parsedRequest = listingValidationSchema.safeParse(updateData);
   if (!parsedRequest.success) {
@@ -175,6 +164,18 @@ async function PUT(request: Request, { params }: { params: { id: string } }) {
       },
       { status: 400 }
     );
+  }
+
+  if (imageFiles.length > 0) {
+    const imageUrls: string[] = [];
+
+    for (const imageFile of imageFiles) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const imageUrl = await uploadImage(buffer, imageFile.name);
+      imageUrls.push(imageUrl);
+    }
+
+    updateData.imageUrls = imageUrls;
   }
 
   try {

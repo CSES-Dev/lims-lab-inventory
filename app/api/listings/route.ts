@@ -26,6 +26,15 @@ const listingValidationSchema = z.object({
     .default([]),
 });
 
+const paramsValidationSchema = z
+  .object({
+    labId: z.string().optional(),
+    itemId: z.string().optional(),
+    page: z.number().int().default(1),
+    limit: z.number().int().default(10),
+  })
+  .strict();
+
 /**
  * Get filtered listings stored in db
  * @param request the request
@@ -54,18 +63,28 @@ async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const labId = searchParams.get("labId") || undefined;
-  const itemId = searchParams.get("itemId") || undefined;
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
+
+  const parsedParams = paramsValidationSchema.safeParse({
+    labId: searchParams.get("labId") ?? undefined,
+    itemId: searchParams.get("itemId") ?? undefined,
+    page: searchParams.get("page") ?? undefined,
+    limit: searchParams.get("limit") ?? undefined,
+  });
+
+  if (!parsedParams.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid request params.",
+      },
+      { status: 400 }
+    );
+  }
 
   try {
-    const { listings, pagination } = await getFilteredListings({
-      labId,
-      itemId,
-      page,
-      limit,
-    });
+    const { listings, pagination } = await getFilteredListings(
+      parsedParams.data
+    );
 
     return NextResponse.json(
       {
@@ -89,7 +108,7 @@ async function GET(request: Request) {
  * @returns JSON response with success message and req body echoed
  */
 async function POST(request: Request) {
-  let { allowed, reason } = await getSession("inventory:create");
+  let { allowed, reason } = await getSession("listing:create");
   if (!allowed) {
     return NextResponse.json(
       { success: false, message: reason },
@@ -143,18 +162,8 @@ async function POST(request: Request) {
   }
 
   const imageFiles = formData.getAll("images") as File[];
-  if (imageFiles.length > 0) {
-    const imageUrls: string[] = [];
-    for (const imageFile of imageFiles) {
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const imageUrl = await uploadImage(buffer, imageFile.name);
-      imageUrls.push(imageUrl);
-    }
-    result.imageUrls = imageUrls;
-  }
 
   const parsedBody = listingValidationSchema.safeParse(result);
-
   if (!parsedBody.success) {
     return NextResponse.json(
       {
@@ -163,6 +172,16 @@ async function POST(request: Request) {
       },
       { status: 400 }
     );
+  }
+
+  if (imageFiles.length > 0) {
+    const imageUrls: string[] = [];
+    for (const imageFile of imageFiles) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const imageUrl = await uploadImage(buffer, imageFile.name);
+      imageUrls.push(imageUrl);
+    }
+    result.imageUrls = imageUrls;
   }
 
   try {

@@ -34,17 +34,14 @@ async function getFilteredListings({
   if (labId) query.labId = labId;
   if (itemId) query.itemId = itemId;
 
-  const MAX_LIMIT = 20; // inquire about this in the future
-  const validPage = isNaN(page) || page < 1 ? 1 : page;
-  const validLimit =
-    isNaN(limit) || limit < 1 ? 10 : Math.min(limit, MAX_LIMIT);
-  const skip = (validPage - 1) * validLimit;
+  const newLimit = Math.min(limit, 20);
+  const skip = (page - 1) * newLimit;
 
   const [listings, total] = await Promise.all([
     ListingModel.find(query)
       .sort({ createdAt: -1 }) // Sort from newest to oldest
       .skip(skip)
-      .limit(validLimit)
+      .limit(newLimit)
       .exec(), // toListing handles doc to JS object, so lean unncessary
     ListingModel.countDocuments(query),
   ]);
@@ -52,10 +49,10 @@ async function getFilteredListings({
   return {
     listings: listings.map((listing) => toListing(listing)),
     pagination: {
-      page: validPage,
-      limit: validLimit,
+      page: page,
+      limit: newLimit,
       total,
-      totalPages: Math.ceil(total / validLimit),
+      totalPages: Math.ceil(total / newLimit),
     },
   };
 }
