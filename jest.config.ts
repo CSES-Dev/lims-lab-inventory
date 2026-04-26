@@ -2,38 +2,58 @@ import type { Config } from "jest";
 import path from "path";
 
 const config: Config = {
-    preset: "ts-jest",
-    testEnvironment: "node",
-    roots: ["<rootDir>"],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  roots: ["<rootDir>"],
 
-    // Test file patterns
-    testMatch: [
-        "**/__tests__/**/*.test.ts",
-        "**/__tests__/**/*.spec.ts",
-        "**/.test.ts",
-        "**/.spec.ts",
+  // Test file patterns
+  testMatch: [
+    "**/__tests__/**/*.test.ts",
+    "**/__tests__/**/*.spec.ts",
+    "**/.test.ts",
+    "**/.spec.ts",
+  ],
+
+  // Module path mapping (for @/ imports)
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
+  },
+
+  // Setup files
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+
+  // Coverage settings
+  collectCoverageFrom: [
+    "app/*/.ts",
+    "app/*/.tsx",
+    "services/*/.ts",
+    "models/*/.ts",
+    "lib/*/.ts",
+    "!*/.d.ts",
+    "!*/node_modules/*",
+    "!*/.next/*",
+    "!*/coverage/*",
+  ],
+
+  coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/coverage/"],
+
+  // Transform files
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        tsconfig: {
+          jsx: "react",
+          esModuleInterop: true,
+        },
+      },
     ],
 
-    // Module path mapping (for @/ imports)
-    moduleNameMapper: {
-        "^@/(.*)$": "<rootDir>/$1",
-    },
+  // Module file extensions
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
-    // Setup files
-    setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-
-    // Coverage settings
-    collectCoverageFrom: [
-        "app/*/.ts",
-        "app/*/.tsx",
-        "services/*/.ts",
-        "models/*/.ts",
-        "lib/*/.ts",
-        "!*/.d.ts",
-        "!*/node_modules/*",
-        "!*/.next/*",
-        "!*/coverage/*",
-    ],
+  // Test timeout (important for DB tests)
+  testTimeout: 10000,
 
     coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/coverage/"],
 

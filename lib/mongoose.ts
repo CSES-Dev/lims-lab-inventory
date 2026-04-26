@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-// Check removed for testing
-
 type MongooseCache = {
     conn: typeof mongoose | null;
     promise: Promise<typeof mongoose> | null;
@@ -22,13 +20,23 @@ const cached: MongooseCache = globalForMongoose.mongoose ?? {
 globalForMongoose.mongoose = cached;
 
 export async function connectToDatabase() {
-    const mongoDbUri = process.env.DATABASE_URL;
+  const mongoDbUri = process.env.DATABASE_URL;
 
-    if (!mongoDbUri) {
-        throw new Error(
-            "Please define the DATABASE_URL environment variable inside .env"
-        );
-    }
+  if (!mongoDbUri) {
+    throw new Error(
+      "Please define the DATABASE_URL environment variable inside .env"
+    );
+  }
+
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(mongoDbUri, {
+      bufferCommands: false,
+    });
+  }
 
     if (cached.conn) {
         return cached.conn;
@@ -59,4 +67,9 @@ export async function disconnectDatabase() {
             throw error;
         }
     }
+}
+
+function test() {
+  console.log("not tested"); // making sure coverage can see which aren't tested
+  // coverage also can't test things that don't occur like errors
 }
