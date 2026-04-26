@@ -1,21 +1,41 @@
+import { MongoMemoryServer } from "mongodb-memory-server";
 import { connectToDatabase, disconnectDatabase } from "@/lib/mongoose";
 import mongoose from "mongoose";
 
+let mongoServer: MongoMemoryServer;
+
 describe("Database Connection (Singleton)", () => {
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    process.env.DATABASE_URL = mongoServer.getUri();
+  });
+
   beforeEach(async () => {
-    // Reset global mongoose state
     global.mongoose = { conn: null, promise: null };
   });
 
   afterEach(async () => {
+    const collections = mongoose.connection.collections;
+
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany({});
+    }
     await disconnectDatabase();
+  });
+
+  afterAll(async () => {
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
+    await mongoose.disconnect();
   });
 
   it("should establish a database connection", async () => {
     const connection = await connectToDatabase();
 
     expect(connection).toBeDefined();
-    expect(mongoose.connection.readyState).toBe(1); // 1 = connected
+    expect(mongoose.connection.readyState).toBe(1);
   });
 
   it("should return the same connection on multiple calls", async () => {
@@ -49,3 +69,5 @@ describe("Database Connection (Singleton)", () => {
     expect(mongoose.connection.readyState).toBe(1);
   });
 });
+
+jest.setTimeout(120000);
