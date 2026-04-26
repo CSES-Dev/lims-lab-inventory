@@ -28,6 +28,13 @@ const userLabBaseSchema = z.object({
 const userLabUpdateSchema = userLabBaseSchema.partial();
 
 function handleRouteError(error: unknown) {
+  if (error instanceof Error && error.message.startsWith("Unauthorized:")) {
+    return NextResponse.json(
+      { message: error.message.replace("Unauthorized: ", "") },
+      { status: 403 }
+    );
+  }
+
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       { message: error.issues[0]?.message ?? "Invalid request" },

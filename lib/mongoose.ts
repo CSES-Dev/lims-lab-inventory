@@ -58,3 +58,7 @@ export async function disconnectDatabase() {
     }
   }
 }
+
+function test() {
+  console.log("not tested");
+}

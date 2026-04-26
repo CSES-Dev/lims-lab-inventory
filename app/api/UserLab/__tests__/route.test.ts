@@ -115,6 +115,19 @@ describe("UserLab API route", () => {
     });
   });
 
+  it("returns 403 when the service rejects the user as unauthorized", async () => {
+    mockedGetUserLabs.mockRejectedValue(new Error("Unauthorized: Insufficient permissions"));
+
+    const response = await GET(
+      new Request("http://localhost/api/UserLab?page=1&limit=10")
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      message: "Insufficient permissions",
+    });
+  });
+
   it("returns 404 when PUT targets a missing entry", async () => {
     mockedUpdateUserLab.mockResolvedValue(null as never);
 

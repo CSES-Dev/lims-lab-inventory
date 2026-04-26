@@ -6,10 +6,15 @@ import {
   updateUserLab,
 } from "@/services/UserLab";
 import { connectToDatabase } from "@/lib/mongoose";
+import { getSession } from "@/lib/rbac";
 import UserLab from "@/models/UserLab";
 
 jest.mock("@/lib/mongoose", () => ({
   connectToDatabase: jest.fn(),
+}));
+
+jest.mock("@/lib/rbac", () => ({
+  getSession: jest.fn(),
 }));
 
 jest.mock("@/models/UserLab", () => ({
@@ -25,12 +30,18 @@ jest.mock("@/models/UserLab", () => ({
 }));
 
 const mockedConnectToDatabase = jest.mocked(connectToDatabase);
+const mockedGetSession = jest.mocked(getSession);
 const mockedUserLabModel = jest.mocked(UserLab);
 
 describe("UserLab service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedConnectToDatabase.mockResolvedValue({} as never);
+    mockedGetSession.mockResolvedValue({
+      allowed: true,
+      user: { role: "PI" },
+      reason: undefined,
+    } as never);
   });
 
   it("returns paginated user labs", async () => {
@@ -45,6 +56,7 @@ describe("UserLab service", () => {
 
     const result = await getUserLabs({ page: 2, limit: 5 });
 
+    expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(mockedUserLabModel.find).toHaveBeenCalledTimes(1);
     expect(skip).toHaveBeenCalledWith(5);
@@ -82,6 +94,19 @@ describe("UserLab service", () => {
     });
   });
 
+  it("throws when the current user cannot manage lab memberships", async () => {
+    mockedGetSession.mockResolvedValue({
+      allowed: false,
+      user: null,
+      reason: "Insufficient permissions",
+    } as never);
+
+    await expect(getUserLabs({ page: 1, limit: 10 })).rejects.toThrow(
+      "Unauthorized: Insufficient permissions"
+    );
+    expect(mockedConnectToDatabase).not.toHaveBeenCalled();
+  });
+
   it("gets one user lab by id", async () => {
     const populatedWithLab = Promise.resolve({ _id: "1" });
     const populateUser = jest.fn().mockReturnValue({
@@ -92,6 +117,7 @@ describe("UserLab service", () => {
 
     const result = await getUserLab("abc123");
 
+    expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(mockedUserLabModel.findById).toHaveBeenCalledWith("abc123");
     expect(populateUser).toHaveBeenCalledWith("user");
@@ -108,6 +134,7 @@ describe("UserLab service", () => {
 
     const result = await addUserLab(payload);
 
+    expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(mockedUserLabModel.create).toHaveBeenCalledWith(payload);
     expect(result).toEqual({ _id: "1", ...payload });
@@ -121,6 +148,7 @@ describe("UserLab service", () => {
 
     const result = await updateUserLab("abc123", { role: "VIEWER" } as never);
 
+    expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(mockedUserLabModel.findByIdAndUpdate).toHaveBeenCalledWith(
       "abc123",
@@ -135,6 +163,7 @@ describe("UserLab service", () => {
 
     const result = await deleteUserLab("abc123");
 
+    expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(mockedUserLabModel.findByIdAndDelete).toHaveBeenCalledWith("abc123");
     expect(result).toEqual({ _id: "1" });
