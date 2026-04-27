@@ -94,6 +94,12 @@
   background: #fff;
 }
 
+.closeButton:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
 @media (max-width: 640px) {
   .dialog {
     padding: 1.5rem;

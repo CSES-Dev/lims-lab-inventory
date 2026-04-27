@@ -1,6 +1,8 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { Listing } from "@/models/Listing";
+import { ListingHeader } from "./ListingHeader";
 import { ContactModal } from "./ContactModal";
 import styles from "./listing-view.module.css";
 
@@ -40,6 +42,31 @@ function formatDate(date?: Date | string) {
 }
 
 /**
+ * Maps condition labels to a stable visual style.
+ */
+function getConditionTone(condition: string) {
+  const normalized = condition.toLowerCase();
+
+  if (normalized === "new") {
+    return styles.conditionNew;
+  }
+
+  if (normalized === "good") {
+    return styles.conditionGood;
+  }
+
+  if (normalized === "fair") {
+    return styles.conditionFair;
+  }
+
+  if (normalized === "poor") {
+    return styles.conditionPoor;
+  }
+
+  return styles.conditionDefault; // fallback
+}
+
+/**
  * Maps hazard labels to a stable visual style.
  */
 function getHazardTone(hazard: string) {
@@ -64,7 +91,22 @@ function getHazardTone(hazard: string) {
  * Main listing view that renders content and handles contact modal state.
  */
 export function ListingDetails({ contactEmail, listing }: ListingDetailsProps) {
+  const imageUrls =
+    listing.imageUrls.length > 0 ? listing.imageUrls : ["", "", ""];
+
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(imageUrls[0]);
+  const [quantity, setQuantity] = useState(1);
+
+  function increaseQuantity() {
+    setQuantity((quantity) =>
+      Math.min(listing.quantityAvailable, quantity + 1)
+    );
+  }
+
+  function decreaseQuantity() {
+    setQuantity((quantity) => Math.max(1, quantity - 1));
+  }
 
   const listingMeta = [
     {
@@ -97,34 +139,55 @@ export function ListingDetails({ contactEmail, listing }: ListingDetailsProps) {
     <main className={styles.pageShell}>
       <section className={styles.page}>
         <div className={styles.topBar}>
-          <a href="/listings" className={styles.backLink}>
-            <span className={styles.page} aria-hidden="true">
+          {/* PROPERLY LINK TO MARKETPLACE PAGE LATER */}
+          <Link className={styles.backLink} href="/listings">
+            <span className={styles.backIcon} aria-hidden="true">
               ←
             </span>
-            <span>Back to Marketplace</span>
-          </a>
+            <span>Back to Market Place</span>
+          </Link>
         </div>
 
         <div className={styles.contentGrid}>
           {/* LEFT-SIDE PICTURES */}
           <section className={styles.galleryColumn}>
-            <div className={styles.heroImageFrame} />
+            <div className={styles.heroImageFrame}>
+              {activeImage ? (
+                <img
+                  alt={listing.itemName}
+                  className={styles.heroImage}
+                  src={activeImage}
+                />
+              ) : null}
+            </div>
+
             <div className={styles.thumbnailRow}>
-              <div className={styles.thumbnailButton} />
-              <div className={styles.thumbnailButton} />
-              <div className={styles.thumbnailButton} />
+              {imageUrls.map((imageUrl, index) => (
+                <button
+                  key={`${imageUrl}-${index}`}
+                  className={styles.thumbnailButton}
+                  onClick={() => setActiveImage(imageUrl)}
+                  type="button"
+                >
+                  {imageUrl ? (
+                    <img
+                      alt={`${listing.itemName} view ${index + 1}`}
+                      className={styles.thumbnailImage}
+                      src={imageUrl}
+                    />
+                  ) : null}
+                </button>
+              ))}
             </div>
           </section>
 
           {/* RIGHT-SIDE INFO */}
           <section className={styles.detailsColumn}>
-            <div className={styles.headerBlock}>
-              {listing.labName ? (
-                <p className={styles.eyebrow}>{listing.labName}</p>
-              ) : null}
-              <h1 className={styles.title}>{listing.itemName}</h1>
-              <p className={styles.price}>{formatPrice(listing.price)}</p>
-            </div>
+            <ListingHeader
+              itemName={listing.itemName}
+              labName={listing.labName!}
+              priceLabel={formatPrice(listing.price)}
+            />
 
             <div className={styles.copyBlock}>
               <h2 className={styles.sectionTitle}>Description</h2>
@@ -137,7 +200,9 @@ export function ListingDetails({ contactEmail, listing }: ListingDetailsProps) {
               <span className={styles.statusPill}>
                 Expiry: {formatDate(listing.expiryDate!)}
               </span>
-              <span className={styles.statusPill}>
+              <span
+                className={`${styles.statusPill} ${getConditionTone(listing.condition)}`}
+              >
                 Condition: {listing.condition}
               </span>
             </div>
@@ -146,9 +211,21 @@ export function ListingDetails({ contactEmail, listing }: ListingDetailsProps) {
               <div className={styles.quantityRow}>
                 <span className={styles.quantityLabel}>Quantity</span>
                 <div className={styles.quantityBadge}>
-                  <span aria-hidden="true">−</span>
-                  <span>1</span>
-                  <span aria-hidden="true">+</span>
+                  <button
+                    className={styles.quantityButton}
+                    onClick={decreaseQuantity}
+                    type="button"
+                  >
+                    −
+                  </button>
+                  <span>{quantity}</span>
+                  <button
+                    className={styles.quantityButton}
+                    onClick={increaseQuantity}
+                    type="button"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 
