@@ -39,7 +39,10 @@ describe("UserLab service", () => {
     mockedConnectToDatabase.mockResolvedValue({} as never);
     mockedGetSession.mockResolvedValue({
       allowed: true,
-      user: { role: "PI" },
+      user: {
+        role: "PI",
+        labs: [{ labId: "507f1f77bcf86cd799439012", role: "PI" }],
+      },
       reason: undefined,
     } as never);
   });
@@ -54,16 +57,24 @@ describe("UserLab service", () => {
     mockedUserLabModel.find.mockReturnValue({ skip } as never);
     mockedUserLabModel.countDocuments.mockResolvedValue(12 as never);
 
-    const result = await getUserLabs({ page: 2, limit: 5 });
+    const result = await getUserLabs({
+      page: 2,
+      limit: 5,
+      labId: "507f1f77bcf86cd799439012",
+    });
 
     expect(mockedGetSession).toHaveBeenCalledWith("lab:manage_users");
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
-    expect(mockedUserLabModel.find).toHaveBeenCalledTimes(1);
+    expect(mockedUserLabModel.find).toHaveBeenCalledWith({
+      lab: "507f1f77bcf86cd799439012",
+    });
     expect(skip).toHaveBeenCalledWith(5);
     expect(limit).toHaveBeenCalledWith(5);
     expect(populateUser).toHaveBeenCalledWith("user");
     expect(populateLab).toHaveBeenCalledWith("lab");
-    expect(mockedUserLabModel.countDocuments).toHaveBeenCalledTimes(1);
+    expect(mockedUserLabModel.countDocuments).toHaveBeenCalledWith({
+      lab: "507f1f77bcf86cd799439012",
+    });
     expect(result).toEqual({
       items: [{ _id: "1" }, { _id: "2" }],
       page: 2,
@@ -83,7 +94,11 @@ describe("UserLab service", () => {
     mockedUserLabModel.find.mockReturnValue({ skip } as never);
     mockedUserLabModel.countDocuments.mockResolvedValue(0 as never);
 
-    const result = await getUserLabs({ page: 1, limit: 10 });
+    const result = await getUserLabs({
+      page: 1,
+      limit: 10,
+      labId: "507f1f77bcf86cd799439012",
+    });
 
     expect(result).toEqual({
       items: [],
@@ -101,10 +116,27 @@ describe("UserLab service", () => {
       reason: "Insufficient permissions",
     } as never);
 
-    await expect(getUserLabs({ page: 1, limit: 10 })).rejects.toThrow(
-      "Unauthorized: Insufficient permissions"
-    );
+    await expect(
+      getUserLabs({
+        page: 1,
+        limit: 10,
+        labId: "507f1f77bcf86cd799439012",
+      })
+    ).rejects.toThrow("Unauthorized: Insufficient permissions");
     expect(mockedConnectToDatabase).not.toHaveBeenCalled();
+  });
+
+  it("throws when the current user does not belong to the requested lab", async () => {
+    await expect(
+      getUserLabs({
+        page: 1,
+        limit: 10,
+        labId: "507f1f77bcf86cd799439099",
+      })
+    ).rejects.toThrow("Unauthorized: Not a member of this lab");
+
+    expect(mockedConnectToDatabase).not.toHaveBeenCalled();
+    expect(mockedUserLabModel.find).not.toHaveBeenCalled();
   });
 
   it("gets one user lab by id", async () => {

@@ -36,7 +36,9 @@ describe("UserLab API route", () => {
     } as never);
 
     const response = await GET(
-      new Request("http://localhost/api/UserLab?page=2&limit=10")
+      new Request(
+        "http://localhost/api/UserLab?page=2&limit=10&labId=507f1f77bcf86cd799439012"
+      )
     );
 
     expect(response.status).toBe(200);
@@ -47,17 +49,34 @@ describe("UserLab API route", () => {
       total: 11,
       totalPages: 2,
     });
-    expect(mockedGetUserLabs).toHaveBeenCalledWith({ page: 2, limit: 10 });
+    expect(mockedGetUserLabs).toHaveBeenCalledWith({
+      page: 2,
+      limit: 10,
+      labId: "507f1f77bcf86cd799439012",
+    });
   });
 
   it("returns 400 when pagination exceeds the allowed limit", async () => {
     const response = await GET(
-      new Request("http://localhost/api/UserLab?limit=20")
+      new Request(
+        "http://localhost/api/UserLab?limit=20&labId=507f1f77bcf86cd799439012"
+      )
     );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
       message: "Too big: expected number to be <=10",
+    });
+  });
+
+  it("returns 400 when the list request is missing a labId", async () => {
+    const response = await GET(
+      new Request("http://localhost/api/UserLab?page=1&limit=10")
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      message: "Invalid input: expected string, received undefined",
     });
   });
 
@@ -119,7 +138,9 @@ describe("UserLab API route", () => {
     mockedGetUserLabs.mockRejectedValue(new Error("Unauthorized: Insufficient permissions"));
 
     const response = await GET(
-      new Request("http://localhost/api/UserLab?page=1&limit=10")
+      new Request(
+        "http://localhost/api/UserLab?page=1&limit=10&labId=507f1f77bcf86cd799439012"
+      )
     );
 
     expect(response.status).toBe(403);

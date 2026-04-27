@@ -6,6 +6,7 @@ import UserLab from "@/models/UserLab";
 export type GetUserLabsOptions = {
   page: number;
   limit: number;
+  labId: string;
 };
 
 export type UserLabPayload = Pick<IUserLab, "user" | "lab" | "role">;
@@ -18,14 +19,27 @@ async function requireUserLabPermission() {
   }
 }
 
-export async function getUserLabs({ page, limit }: GetUserLabsOptions) {
-  await requireUserLabPermission();
+export async function getUserLabs({ page, limit, labId }: GetUserLabsOptions) {
+  const { allowed, user, reason } = await getSession("lab:manage_users");
+
+  if (!allowed) {
+    throw new Error(`Unauthorized: ${reason}`);
+  }
+
+  const belongsToLab = user?.labs?.some(
+    (membership) => String(membership.labId) === labId
+  );
+
+  if (!belongsToLab) {
+    throw new Error("Unauthorized: Not a member of this lab");
+  }
+
   await connectToDatabase();
   const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
-    UserLab.find().skip(skip).limit(limit).populate("user").populate("lab"),
-    UserLab.countDocuments(),
+    UserLab.find({ lab: labId }).skip(skip).limit(limit).populate("user").populate("lab"),
+    UserLab.countDocuments({ lab: labId }),
   ]);
 
   return {
