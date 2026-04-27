@@ -20,6 +20,7 @@ const ROLE_PERMISSIONS: Record<Role, string[]> = {
         "inventory:update",
         "inventory:set_threshold",
         "transfer:request",
+        "lab:manage_users",
         "inventory:view"
     ],
     RESEARCHER: [
