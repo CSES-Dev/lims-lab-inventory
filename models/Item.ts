@@ -12,7 +12,12 @@ import {
 // Fill enums with more items when more info is provided
 export const categoryValues = ["consumable"] as const;
 export const notificationEventValues = ["LOW_STOCK"] as const;
-export const notificationAudienceValues = ["PI", "LAB_MANAGER"] as const;
+export const notificationAudienceValues = [
+    "PI",
+    "LAB_MANAGER",
+    "RESEARCHER",
+    "VIEWER",
+] as const;
 
 const transformDocument = (_: unknown, ret: Record<string, unknown>) => {
     ret.id = ret._id?.toString();

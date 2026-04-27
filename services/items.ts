@@ -36,6 +36,11 @@ export async function getItems(): Promise<Item[]> {
  * @returns filtered items in the form of a JS object
  */
 export async function filteredGet(options: getItemOptions) {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
     await connectToDatabase();
     const page = Math.max(1, Math.floor(options?.page ?? 1));
     const limit = Math.max(1, Math.min(Math.floor(options?.limit ?? 10), 50));
@@ -78,6 +83,11 @@ export async function filteredGet(options: getItemOptions) {
  * @returns the listing in the form of a JS Object
  */
 export async function getItem(id: string): Promise<Item | null> {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
     await connectToDatabase();
     const item = await ItemModel.findById(id).lean().exec();
     return item ? toItemFromLean(item) : null;
@@ -89,6 +99,11 @@ export async function getItem(id: string): Promise<Item | null> {
  * @returns the added item in the form of a JS Object
  */
 export async function addItem(newItem: ItemCreateInput): Promise<Item> {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
     await connectToDatabase();
     const created = await ItemModel.create(newItem);
     return toItem(created);
@@ -105,6 +120,11 @@ export async function updateItem(
     id: string,
     data: ItemUpdateInput
 ): Promise<Item | null> {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
     await connectToDatabase();
     const updated = await ItemModel.findByIdAndUpdate(id, data, {
         new: true,
@@ -121,6 +141,11 @@ export async function updateItem(
 // Don't use this for tables where nothing needs to be deleted
 // Could be accidentally or maliciously used to get rid of important data
 export async function deleteItem(id: string): Promise<boolean> {
+    const { allowed, user, reason } = await getSession("permission:name");
+
+    if (!allowed) {
+        throw new Error(`Unauthorized: ${reason}`);
+    }
     await connectToDatabase();
     const deleted = await ItemModel.findByIdAndDelete(id).exec();
     return Boolean(deleted);
