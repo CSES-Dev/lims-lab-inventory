@@ -17,6 +17,7 @@ const objectIdSchema = z
 const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(10).default(10),
+  labId: objectIdSchema,
 });
 
 const userLabBaseSchema = z.object({
@@ -74,6 +75,7 @@ export async function GET(request: Request) {
     const pagination = paginationSchema.parse({
       page: searchParams.get("page") ?? undefined,
       limit: searchParams.get("limit") ?? undefined,
+      labId: searchParams.get("labId") ?? undefined,
     });
     const entries = await getUserLabs(pagination);
     return NextResponse.json(entries, { status: 200 });
