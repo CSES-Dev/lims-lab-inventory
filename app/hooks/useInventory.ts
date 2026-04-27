@@ -36,8 +36,67 @@ export function useInventory(
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch
+    // Mocked fetch
     const refresh = useCallback(async () => {
+        setIsLoading(false);
+        setItems([
+            {
+                id: "abc0001",
+                labId: "lab-001",
+                name: "Nitrile Gloves",
+                category: "consumable",
+                quantity: 50,
+                threshold: {
+                    minQuantity: 10,
+                    enabled: true,
+                    lastAlertSentAt: "",
+                },
+                notificationPolicy: { event: "LOW_STOCK", audience: "PI" },
+                createdAt: "",
+                updatedAt: "",
+            },
+            {
+                id: "abc0002",
+                labId: "lab-001",
+                name: "Centrifuge Tubes",
+                category: "consumable",
+                quantity: 0, // triggers "Condition: Expired" badge
+                threshold: {
+                    minQuantity: 5,
+                    enabled: true,
+                    lastAlertSentAt: "",
+                },
+                notificationPolicy: {
+                    event: "LOW_STOCK",
+                    audience: "LAB_MANAGER",
+                },
+                createdAt: "",
+                updatedAt: "",
+            },
+            {
+                id: "abc0003",
+                labId: "lab-002",
+                name: "DMEM Cell Culture",
+                category: "consumable",
+                quantity: 12,
+                threshold: {
+                    minQuantity: 3,
+                    enabled: true,
+                    lastAlertSentAt: "",
+                },
+                notificationPolicy: { event: "LOW_STOCK", audience: "PI" },
+                createdAt: "",
+                updatedAt: "",
+            },
+        ]);
+    }, [labId]);
+
+    useEffect(() => {
+        refresh();
+    }, [refresh]);
+
+    // True fetch (uncomment when DB situation is sorted out)
+    /*     const refresh = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
@@ -50,7 +109,7 @@ export function useInventory(
         } finally {
             setIsLoading(false);
         }
-    }, [labId]);
+    }, [labId]); */
 
     // Mutations
 
