@@ -13,7 +13,8 @@
         "lint-fix": "(eslint --fix --cache --report-unused-disable-directives . || true) && prettier --write .",
         "lint-check": "eslint --cache --report-unused-disable-directives . && prettier --check .",
         "prepare": "husky",
-        "test": "playwright test"
+        "test": "playwright test",
+        "test:ci": "jest --forceExit"
     },
     "dependencies": {
         "@playwright/test": "^1.49.0",
