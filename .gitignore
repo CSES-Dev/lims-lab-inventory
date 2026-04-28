@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env.local
+.env
+.env.test
+.DS_Store
+.env
+coverage/
+.next/
+playwright-report/
