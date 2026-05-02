@@ -1,4 +1,7 @@
+import { describe } from "node:test";
+import test, { expect } from "playwright/test";
 import Notification from "../Notification";
+
 
 describe("Notification Schema", () => {
     test("valid user passes", async () => {
@@ -9,9 +12,9 @@ describe("Notification Schema", () => {
             recipients: [
                 {
                     role: ["PI", "RESEARCHER"],
-                    type: ["EMAIL"]
-                }
-            ]
+                    type: ["EMAIL"],
+                },
+            ],
         });
     await expect(notification.validate()).resolves.toBeUndefined();
     });
@@ -22,9 +25,9 @@ describe("Notification Schema", () => {
             recipients: [
                 {
                     role: ["PI", "RESEARCHER"],
-                    type: ["EMAIL"]
-                }
-            ]
+                    type: ["EMAIL"],
+                },
+            ],
         });
     await expect(notification.validate()).rejects.toThrow();
     });
