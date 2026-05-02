@@ -12,7 +12,7 @@ const notificationSchema = new Schema({
                 required: true,
                 enum: ["PI", "LAB_MANAGER", "RESEARCHER"],
             }],
-            type: [{
+            channel: [{
                 type: String,
             }],
         }

@@ -10,7 +10,7 @@ describe("Notification Schema", () => {
             recipients: [
                 {
                     role: ["PI", "RESEARCHER"],
-                    type: ["EMAIL"],
+                    channel: ["EMAIL"],
                 },
             ],
         });
@@ -23,7 +23,7 @@ describe("Notification Schema", () => {
             recipients: [
                 {
                     role: ["PI", "RESEARCHER"],
-                    type: ["EMAIL"],
+                    channel: ["EMAIL"],
                 },
             ],
         });
