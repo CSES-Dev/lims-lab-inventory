@@ -28,7 +28,6 @@ export async function startNotificationWatcher() {
     // If quantity is below the threshold, continue
     // Otherwise, send a notification
     await Notification.create({
-      _id: `notif_${Date.now()}`,
       type: "DB_UPDATE",
       labId: updatedDoc.labId ?? "unknown",
       resourceId: String(updatedDoc._id),
