@@ -31,7 +31,7 @@ export default function CopurchaseInvite({ onClose, onSend }: InviteModalProps) 
         className={styles.input}
         type="email"
         value={email}
-        placeholder="colleague@ucsd.edu"
+        placeholder="Dr. Xu"
         onChange={(e) => setEmail(e.target.value)}
       />
 
