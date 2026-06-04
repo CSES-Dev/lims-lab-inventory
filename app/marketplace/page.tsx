@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useListings } from "@/app/hooks/useListings";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
@@ -26,71 +26,16 @@ export default function MarketplacePage() {
         expiryFilter: "all",
     });
 
-    // Filtered listings for the grid
-    const filteredItems = useMemo(() => {
-        return listings.filter(listing => {
-            // Search filter
-            if (
-                filters.search &&
-                !listing.itemName.toLowerCase().includes(filters.search.toLowerCase())
-            ) {
-                return false;
-            }
-
-            // Lab filter
-            if (filters.labId && listing.labId !== filters.labId) {
-                return false;
-            }
-
-            // Condition filter
-            if (filters.condition && listing.condition !== filters.condition) {
-                return false;
-            }
-
-            // Expiry filter
-            if (filters.expiryFilter !== "all") {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const expiryDate = listing.expiryDate ? new Date(listing.expiryDate) : null;
-                if (expiryDate) {
-                    expiryDate.setHours(0, 0, 0, 0);
-                }
-
-                const thirtyDaysFromNow = new Date(today);
-                thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-
-                if (filters.expiryFilter === "expired") {
-                    // Show only expired items
-                    if (!expiryDate || expiryDate >= today) {
-                        return false;
-                    }
-                } else if (filters.expiryFilter === "expiring-soon") {
-                    // Show items expiring in next 30 days (but not already expired)
-                    if (!expiryDate || expiryDate < today || expiryDate > thirtyDaysFromNow) {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        });
-    }, [listings, filters]);
+    const filteredItems = listings.filter(listing =>
+        !filters.search ||
+        listing.itemName.toLowerCase().includes(filters.search.toLowerCase())
+    );
 
     // Listings belonging to the current user's labs (for sidebar)
     const myLabIds = new Set((currentUser?.labs ?? []).map(l => l.labId));
     const myItems = listings.filter(listing => myLabIds.has(listing.labId));
 
-    // Derive lab options for the filter dropdown from available listings
-    const labOptions = useMemo(() => {
-        const seen = new Map<string, string>();
-        listings.forEach(listing => {
-            if (!seen.has(listing.labId)) {
-                seen.set(listing.labId, listing.labName || listing.labId);
-            }
-        });
-        return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
-    }, [listings]);
+    const labOptions: { id: string; name: string }[] = [];
 
     function handleEditItem(listing: Listing) {
         router.push(`/listings/${listing.id}/edit`);
